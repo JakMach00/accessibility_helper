@@ -1,0 +1,20 @@
+import { ModuleRegistry } from '@infra/registry/ModuleRegistry';
+import { WcagScanModule } from '@infra/modules/WcagScanModule';
+import { KeyboardNavigationModule } from '@infra/modules/KeyboardNavigationModule';
+import { ZoomReflowModule } from '@infra/modules/ZoomReflowModule';
+import { ContrastModule } from '@infra/modules/ContrastModule';
+import { AriaModule } from '@infra/modules/AriaModule';
+import { NvdaModule } from '@infra/modules/NvdaModule';
+
+// Single source of truth for the set of audit modules. Used both by the process
+// glowny Electron (composition), jak i przez CLI, aby uniknac rozjazdu list.
+export function createDefaultRegistry(): ModuleRegistry {
+  return new ModuleRegistry([
+    new WcagScanModule(),
+    new KeyboardNavigationModule(),
+    new ZoomReflowModule(),
+    new ContrastModule(),
+    new AriaModule(),
+    new NvdaModule()
+  ]);
+}

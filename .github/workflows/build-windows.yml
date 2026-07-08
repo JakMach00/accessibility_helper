@@ -1,0 +1,52 @@
+name: Build Windows
+
+# Buduje gotowe pliki .exe na maszynie Windows GitHuba. Nie potrzebujesz lokalnie
+# npm ani niczego instalowac - pobierasz gotowy plik z zakladki Actions (Artifacts)
+# albo z Releases (przy tagach v*).
+on:
+  workflow_dispatch: {} # reczne uruchomienie z zakladki Actions
+  push:
+    tags:
+      - 'v*' # np. v0.1.0 - tworzy takze Release z plikami do pobrania
+
+permissions:
+  contents: write # potrzebne do utworzenia Release przy tagu
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v4
+
+      - name: Zainstaluj Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Zainstaluj zaleznosci
+        # Pomijamy pobieranie Chromium przez Playwright - wersja .exe go nie pakuje,
+        # a do samego budowania nie jest potrzebny (aplikacja uzywa Edge/Chrome z systemu).
+        run: npm install
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+      - name: Testy jednostkowe
+        run: npm test
+
+      - name: Zbuduj aplikacje i instalatory
+        run: npm run dist
+
+      - name: Wystaw pliki jako artefakt (do pobrania z zakladki Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: wcag-auditor-windows
+          path: |
+            release/*.exe
+          if-no-files-found: error
+
+      - name: Utworz Release (tylko dla tagow v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe

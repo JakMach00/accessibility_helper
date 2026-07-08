@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Restrykcyjne CSP: blokuje wszelkie skrypty. Wstrzykniety <script> nie zadzialalby.
+         Wstrzykniecie axe przez CDP Runtime.evaluate omija CSP, wiec skan powinien dzialac. -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'none'" />
+    <title>Fikstura z blokada CSP</title>
+  </head>
+  <body>
+    <h1>Strona z restrykcyjnym CSP</h1>
+    <!-- Obraz bez alt - axe powinien to wykryc mimo CSP -->
+    <img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=" width="20" height="20" />
+  </body>
+</html>

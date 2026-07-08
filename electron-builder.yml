@@ -1,0 +1,44 @@
+appId: com.jakub.wcagauditor
+productName: WCAG Auditor
+copyright: Copyright © 2026 Jakub
+
+# electron-vite buduje do out/, tu tylko pakujemy wynik.
+directories:
+  output: release
+  buildResources: build
+
+# Pliki aplikacji wchodzace do paczki. Zaleznosci produkcyjne (playwright, axe-core)
+# electron-builder dolacza automatycznie z node_modules.
+files:
+  - out/**/*
+  - package.json
+
+# Playwright uruchamia procesy przegladarki, wiec jego kod trzymamy rozpakowany z asar.
+asarUnpack:
+  - "**/node_modules/playwright/**"
+  - "**/node_modules/playwright-core/**"
+
+win:
+  target:
+    - target: portable
+      arch:
+        - x64
+    - target: nsis
+      arch:
+        - x64
+  # Wlasna ikona: odkomentuj po umieszczeniu pliku build/icon.ico (256x256).
+  # icon: build/icon.ico
+
+# Wersja portable: pojedynczy samodzielny plik .exe, bez instalacji.
+portable:
+  artifactName: WCAG-Auditor-${version}-portable.${ext}
+  # Stala nazwa katalogu rozpakowania w %TEMP% (szybszy kolejny start).
+  unpackDirName: WCAGAuditorPortable
+
+nsis:
+  oneClick: false                          # klasyczny kreator zamiast instalacji jednym klikiem
+  perMachine: false                        # instalacja dla biezacego uzytkownika (bez uprawnien admina)
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: WCAG Auditor

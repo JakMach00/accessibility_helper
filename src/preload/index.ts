@@ -1,0 +1,41 @@
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import type {
+  AuditProgressEvent,
+  AvailableModuleDTO,
+  ConnectOptions,
+  ConnectResultDTO,
+  DomInspectionDTO,
+  ExportOptions,
+  ExportResultDTO,
+  RunAuditOptions,
+  ScanDiffDTO,
+  ScanResultDTO,
+  ScanSummaryDTO
+} from '@shared/types';
+import { IPC, type RendererApi } from '@shared/ipc';
+
+const api: RendererApi = {
+  connect: (options: ConnectOptions): Promise<ConnectResultDTO> => ipcRenderer.invoke(IPC.browserConnect, options),
+  listTargets: (): Promise<ConnectResultDTO> => ipcRenderer.invoke(IPC.browserListTargets),
+  closeBrowser: (): Promise<void> => ipcRenderer.invoke(IPC.browserClose),
+  listModules: (): Promise<AvailableModuleDTO[]> => ipcRenderer.invoke(IPC.modulesList),
+  runAudit: (options: RunAuditOptions): Promise<ScanResultDTO> => ipcRenderer.invoke(IPC.auditRun, options),
+  onProgress: (listener: (event: AuditProgressEvent) => void): (() => void) => {
+    const handler = (_e: IpcRendererEvent, payload: AuditProgressEvent): void => listener(payload);
+    ipcRenderer.on(IPC.auditProgress, handler);
+    return () => ipcRenderer.removeListener(IPC.auditProgress, handler);
+  },
+  historyList: (): Promise<ScanSummaryDTO[]> => ipcRenderer.invoke(IPC.historyList),
+  historyGet: (id: string): Promise<ScanResultDTO | null> => ipcRenderer.invoke(IPC.historyGet, id),
+  historyDelete: (id: string): Promise<void> => ipcRenderer.invoke(IPC.historyDelete, id),
+  historyCompare: (baseId: string, targetId: string): Promise<ScanDiffDTO> =>
+    ipcRenderer.invoke(IPC.historyCompare, baseId, targetId),
+  exportReport: (options: ExportOptions): Promise<ExportResultDTO | null> =>
+    ipcRenderer.invoke(IPC.reportExport, options),
+  inspectDom: (targetId: string, cssSelector: string): Promise<DomInspectionDTO> =>
+    ipcRenderer.invoke(IPC.domInspect, targetId, cssSelector),
+  readScreenshot: (path: string): Promise<string> => ipcRenderer.invoke(IPC.screenshotRead, path),
+  openScreenshotsFolder: (): Promise<void> => ipcRenderer.invoke(IPC.shellOpenScreenshots)
+};
+
+contextBridge.exposeInMainWorld('api', api);
