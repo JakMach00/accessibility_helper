@@ -35,7 +35,7 @@ jobs:
         run: npm test
 
       - name: Zbuduj aplikacje i instalatory
-        run: npm run dist
+        run: npm run dist -- --publish never
 
       - name: Wystaw pliki jako artefakt (do pobrania z zakladki Actions)
         uses: actions/upload-artifact@v4
