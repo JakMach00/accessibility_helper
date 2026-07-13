@@ -1,7 +1,7 @@
 import type { BoundingBoxDTO } from '@shared/types';
 
 // Functions in this file are serialized and executed in the page context (page.evaluate).
-// Dlatego kazda funkcja jest samowystarczalna: nie odwoluje sie do importow ani do
+// Each function is therefore self-contained: it refers neither to imports nor to
 // module variables, and defines all helpers inside itself.
 
 export interface FocusableDescriptor {
@@ -215,7 +215,7 @@ export function collectKeyboardData(): KeyboardData {
   let hasSkipLink = false;
   let skipLinkText = '';
   const anchors = Array.from(document.querySelectorAll('a[href^="#"]')).slice(0, 6) as HTMLAnchorElement[];
-  const skipPattern = /skip|przejd[zź]|pomi[nń]|jump to|do (?:tre[sś]ci|g[lł][oó]wnej|nawigacji)/i;
+  const skipPattern = /\bskip\b|\bjump to\b/i;
   for (const a of anchors) {
     const text = (a.textContent || '').replace(/\s+/g, ' ').trim();
     const idAndClass = `${a.id} ${a.className}`.toLowerCase();
@@ -263,7 +263,7 @@ export function collectKeyboardData(): KeyboardData {
   return { focusables, clickables, nav, focusStyles };
 }
 
-// Odczyt aktywnego elementu i jego znacznika data-wcag-kbd (do mapowania sekwencji Tab).
+// Reads the active element and its data-wcag-kbd marker (to map the Tab sequence).
 export function activeElementSignature(): ActiveSignature {
   const el = document.activeElement as HTMLElement | null;
   if (!el || el === document.body || el === document.documentElement) {

@@ -40,8 +40,8 @@ export const IPC = {
   jiraCreateIssue: 'jira:createIssue'
 } as const;
 
-// Kontrakt API wystawianego przez preload jako window.api.
-// Renderer programuje wylacznie do tego interfejsu.
+// Contract of the API exposed by the preload as window.api.
+// The renderer programs against this interface only.
 export interface RendererApi {
   connect(options: ConnectOptions): Promise<ConnectResultDTO>;
   listTargets(): Promise<ConnectResultDTO>;

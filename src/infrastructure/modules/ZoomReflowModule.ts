@@ -51,14 +51,14 @@ export class ZoomReflowModule implements IAuditModule {
     logger.info('Zoom: 100% screenshot (reference)');
     const shot100 = await shot('zoom-100pct');
 
-    // 2) Reflow przy 200% (640 px).
+    // 2) Reflow at 200% (640 px).
     logger.info('Zoom: measuring reflow at 200%');
     await page.setViewport(WIDTH_200, HEIGHT_200);
     await sleep(REFLOW_DELAY_MS);
     const report200 = await page.evaluate<OverflowReport>(measureOverflow);
     const shot200 = await shot('zoom-200pct');
 
-    // 3) Reflow przy 400% (320 px) - kanoniczny cel 1.4.10.
+    // 3) Reflow at 400% (320 px) - the canonical 1.4.10 target.
     logger.info('Zoom: measuring reflow at 400%');
     await page.setViewport(WIDTH_400, HEIGHT_400);
     await sleep(REFLOW_DELAY_MS);

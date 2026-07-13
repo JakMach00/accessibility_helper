@@ -1,7 +1,7 @@
 {
   "name": "wcag-auditor",
   "version": "2.0.0",
-  "description": "Desktopowe narzedzie do automatycznej analizy WCAG 2.2 dla testerow Accessibility i QA.",
+  "description": "Desktop tool for automated WCAG 2.2 accessibility auditing, aimed at QA and accessibility testers.",
   "author": "Jakub",
   "license": "MIT",
   "main": "./out/main/index.js",
@@ -54,5 +54,16 @@
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vitest": "^2.1.8"
-  }
+  },
+  "private": true,
+  "keywords": [
+    "accessibility",
+    "wcag",
+    "wcag2.2",
+    "a11y",
+    "audit",
+    "axe-core",
+    "electron",
+    "testing"
+  ]
 }

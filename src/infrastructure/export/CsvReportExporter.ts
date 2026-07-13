@@ -5,8 +5,8 @@ import type { IReportExporter } from '@core/domain/ports';
 
 function escape(value: string): string {
   let v = value.replace(/\r?\n/g, ' ').trim();
-  // Neutralizacja wstrzykniec formul: komorki zaczynajace sie od =, +, -, @ moga zostac
-  // wykonane jako formula w Excelu/Google Sheets. Poprzedzamy je apostrofem.
+  // Neutralize formula injection: cells starting with =, +, -, @ could be
+  // executed as a formula in Excel/Google Sheets, so we prefix them with an apostrophe.
   if (/^[=+\-@]/.test(v)) v = `'${v}`;
   if (v.includes('"') || v.includes(',') || v.includes(';')) {
     return '"' + v.replace(/"/g, '""') + '"';

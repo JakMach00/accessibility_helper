@@ -5,7 +5,7 @@ import { toSummary, type ScanResult } from '@core/domain/ScanResult';
 import type { ILogger, IScanRepository } from '@core/domain/ports';
 
 // Default repository implementation: each scan is a JSON file in the history directory.
-// Port IScanRepository pozwala podmienic to na SQLite bez zmian w reszcie aplikacji.
+// The IScanRepository port lets this be swapped for SQLite without touching the rest of the app.
 export class FileScanRepository implements IScanRepository {
   constructor(
     private readonly baseDir: string,
@@ -18,7 +18,7 @@ export class FileScanRepository implements IScanRepository {
 
   private fileFor(id: string): string {
     // Id pochodzi zza granicy IPC. Dopuszczamy tylko bezpieczne znaki, by uniemozliwic
-    // wyjscie poza katalog historii (np. "../../cos").
+    // escaping the history directory (e.g. "../../something").
     if (!/^[a-zA-Z0-9_-]{1,128}$/.test(id)) {
       throw new Error(`Unsafe scan identifier: ${id}`);
     }

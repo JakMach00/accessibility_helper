@@ -9,7 +9,7 @@ import { buildCliContainer } from './container';
 
 const APP_VERSION = '0.1.0';
 
-// Logger CLI pisze wylacznie na stderr, aby stdout pozostal czysty (dla --json-summary).
+// The CLI logger writes only to stderr so stdout stays clean (for --json-summary).
 function stderrLogger(quiet: boolean): ILogger {
   const write = (level: string, message: string): void => {
     process.stderr.write(`${level} ${message}\n`);

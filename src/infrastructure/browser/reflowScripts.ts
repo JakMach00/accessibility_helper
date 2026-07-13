@@ -95,7 +95,7 @@ export function measureOverflow(): OverflowReport {
     if (rect.width <= 0 || rect.height <= 0) continue;
     if (rect.right <= clientWidth + TOL) continue;
     if (!isVisible(el)) continue;
-    // Jesli rodzic tez wystaje, raportujemy najwyzszego przodka (mniej szumu).
+    // If the parent also overflows, report the topmost ancestor (less noise).
     const parent = el.parentElement;
     if (parent && parent !== document.body) {
       const pr = parent.getBoundingClientRect();

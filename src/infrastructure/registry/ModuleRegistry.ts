@@ -1,7 +1,7 @@
 import type { IAuditModule, IModuleRegistry } from '@core/domain/ports';
 
 // Audit module registry. New modules (Keyboard, Zoom, Contrast, ARIA, NVDA)
-// oraz zewnetrzne wtyczki dodaje sie tutaj bez zmiany orkiestratora.
+// and external plugins are added here without changing the orchestrator.
 export class ModuleRegistry implements IModuleRegistry {
   private readonly modules: IAuditModule[];
 

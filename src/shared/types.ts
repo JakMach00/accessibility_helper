@@ -1,5 +1,5 @@
 // Data contracts shared between the main and renderer processes.
-// To jest jedyne miejsce "prawdy" o ksztalcie danych przesylanych przez IPC.
+// Single source of truth for the shape of data sent over IPC.
 
 export type Severity = 'critical' | 'serious' | 'moderate' | 'minor';
 

@@ -55,7 +55,7 @@ export function computeNodeInfo(selector: string): NodeInfo {
   };
 }
 
-// Pobiera computed styles, atrybuty ARIA i podstawowe dane dla DOM Inspectora.
+// Reads computed styles, ARIA attributes and basic data for the DOM inspector.
 export interface InspectResult {
   found: boolean;
   html: string;
@@ -127,7 +127,7 @@ export function inspectNode(selector: string): InspectResult {
 }
 
 // Rysuje w stronie tymczasowy overlay (czerwony prostokat + numer) wokol elementu.
-// Zwraca id overlaya, zeby mozna go bylo usunac po zrzucie.
+// Returns the overlay id so it can be removed after the screenshot.
 export function drawOverlay(payload: { box: BoundingBoxDTO; label: string }): string {
   const id = 'wcag-auditor-overlay-' + Math.random().toString(36).slice(2);
   const wrapper = document.createElement('div');

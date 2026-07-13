@@ -1,5 +1,5 @@
-// Tlumaczenie surowych bledow Playwright/CDP na komunikaty zrozumiale dla uzytkownika.
-// Kazdy komunikat mowi CO sie stalo i CO zrobic.
+// Translates raw Playwright/CDP errors into user-friendly messages.
+// Each message states WHAT happened and WHAT to do.
 
 function raw(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

@@ -10,7 +10,7 @@ import { AriaModule } from '@infra/modules/AriaModule';
 import { NvdaModule } from '@infra/modules/NvdaModule';
 
 // The tests run the modules on real, headless Chromium against HTML fixtures
-// z celowo zasianymi problemami. Wymagaja zainstalowanego Chromium dla Playwright
+// with deliberately seeded issues. They require Chromium for Playwright
 // (npx playwright install chromium). Uruchamiane osobno: npm run test:e2e.
 
 const silentLogger: ILogger = {

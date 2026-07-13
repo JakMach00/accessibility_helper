@@ -28,7 +28,7 @@ function flattenIssues(scan: ScanResultDTO): Issue[] {
 }
 
 // Comparison of two scans. base = earlier version, target = later one.
-// Regresja = problem obecny w target, ktorego nie bylo w base.
+// Regression = an issue present in target that was not in base.
 export class CompareScansUseCase {
   constructor(private readonly repository: IScanRepository) {}
 

@@ -26,7 +26,7 @@ export interface ILogger {
 // ---------------------------------------------------------------------------
 // A browser page. The minimal surface the audit modules need.
 // Adapter (Playwright) tlumaczy to na konkretny silnik. Dzieki temu domena
-// nie wie nic o Playwright ani CDP.
+// knows nothing about Playwright or CDP.
 // ---------------------------------------------------------------------------
 export interface IBrowserPage {
   url(): string;
@@ -41,8 +41,8 @@ export interface IBrowserPage {
   screenshotClip(box: BoundingBoxDTO): Promise<Uint8Array>;
   // Force CSS states (:hover, :focus, :active) for the contrast module.
   forcePseudoStates(cssSelector: string, states: Array<'hover' | 'focus' | 'active'>): Promise<void>;
-  // Czyszczenie emulacji viewportu po skanie (istotne dla trybu attach na realnej karcie).
-  // Opcjonalne: atrapy w testach moga go nie implementowac.
+  // Clears the viewport emulation after a scan (important for attach mode on a real tab).
+  // Optional: test fakes may leave it unimplemented.
   resetEmulation?(): Promise<void>;
 }
 
@@ -71,7 +71,7 @@ export interface AuditContext {
 
 // ---------------------------------------------------------------------------
 // Audit module. The heart of the plugin architecture.
-// Kazdy modul (WCAG, Keyboard, Zoom, Contrast, ARIA, NVDA) implementuje ten port.
+// Every module (WCAG, Keyboard, Zoom, Contrast, ARIA, NVDA) implements this port.
 // ---------------------------------------------------------------------------
 export interface IAuditModule {
   readonly id: string;
@@ -125,5 +125,5 @@ export interface IProgressReporter {
   report(event: AuditProgressEvent): void;
 }
 
-// Re-eksport dla wygody warstwy application.
+// Re-export for the convenience of the application layer.
 export type { Issue, ModuleResult, ScanResult };

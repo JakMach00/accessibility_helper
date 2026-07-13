@@ -212,7 +212,7 @@ export function parseCliArgs(argv: string[]): ParseResult {
   };
 }
 
-// Ocena progow dla CI: kod 1, jesli ktorykolwiek prog przekroczony.
+// Threshold evaluation for CI: exit code 1 if any threshold is exceeded.
 export function evaluateExitCode(scan: ScanResultDTO, thresholds: CliThresholds): { code: number; reasons: string[] } {
   const reasons: string[] = [];
   const c = scan.counts;
@@ -234,7 +234,7 @@ export function evaluateExitCode(scan: ScanResultDTO, thresholds: CliThresholds)
   return { code: reasons.length > 0 ? 1 : 0, reasons };
 }
 
-// Czytelne podsumowanie dla czlowieka.
+// Human-readable summary.
 export function formatSummary(scan: ScanResultDTO): string {
   const lines: string[] = [];
   lines.push(`URL:     ${scan.url}`);

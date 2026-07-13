@@ -62,12 +62,3 @@ export function ExportPanel() {
   );
 }
 
-export function Placeholder({ name }: { name: string }) {
-  return (
-    <div className="placeholder">
-      <div className="icon">🚧</div>
-      <div style={{ fontSize: 16, color: 'var(--text)' }}>Module “{name}”</div>
-      <div>The interface and port are ready. This module will be implemented in a later stage.</div>
-    </div>
-  );
-}

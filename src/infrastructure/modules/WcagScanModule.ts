@@ -8,7 +8,7 @@ import type { AuditContext, IAuditModule } from '@core/domain/ports';
 
 const axeSource = (axe as unknown as { source: string }).source;
 
-// Minimalne typy wyniku axe wykorzystywane przez modul (unikamy zaleznosci od pelnych typow axe w page).
+// Minimal axe result types used by the module (avoids depending on axe's full types here).
 interface AxeNode {
   target: string[];
   html: string;

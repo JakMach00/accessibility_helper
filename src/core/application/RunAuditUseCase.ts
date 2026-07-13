@@ -24,7 +24,7 @@ export interface RunAuditDeps {
   appVersion: string;
 }
 
-// Orkiestrator audytu. Nie wie NIC o konkretnych modulach, tylko iteruje
+// Audit orchestrator. It knows NOTHING about specific modules; it only iterates
 // over whatever the registry provides. A single module's errors do not break the whole scan.
 export class RunAuditUseCase {
   constructor(private readonly deps: RunAuditDeps) {}

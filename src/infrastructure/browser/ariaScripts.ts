@@ -1,7 +1,7 @@
 import type { BoundingBoxDTO } from '@shared/types';
 
 // Function executed in the page context. Self-contained: ARIA tables and helpers
-// sa zdefiniowane wewnatrz, bo cialo funkcji jest serializowane do page.evaluate.
+// are defined inline, because the function body is serialized to page.evaluate.
 
 export type AriaFindingKind = 'invalid-role' | 'abstract-role' | 'missing-name' | 'missing-state' | 'broken-ref';
 

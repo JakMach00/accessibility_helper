@@ -7,7 +7,7 @@ import { AriaModule } from '@infra/modules/AriaModule';
 import { NvdaModule } from '@infra/modules/NvdaModule';
 
 // Single source of truth for the set of audit modules. Used both by the process
-// glowny Electron (composition), jak i przez CLI, aby uniknac rozjazdu list.
+// the Electron main process (composition) and by the CLI, to keep the lists in sync.
 export function createDefaultRegistry(): ModuleRegistry {
   return new ModuleRegistry([
     new WcagScanModule(),

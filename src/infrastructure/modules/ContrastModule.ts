@@ -50,7 +50,7 @@ export class ContrastModule implements IAuditModule {
         selector
       });
       if (!base || base.ratio === null || base.hasBgImage) {
-        // Tlo graficzne lub brak pomiaru: axe oznacza to jako do weryfikacji, pomijamy.
+        // Image background or no measurement: axe flags this for review, so we skip it.
         continue;
       }
       const required = base.isLargeText ? 3 : 4.5;

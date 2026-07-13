@@ -63,8 +63,8 @@ export class PlaywrightBrowserPage implements IBrowserPage {
   }
 
   evaluate<R, A = undefined>(fn: (arg: A) => R | Promise<R>, arg?: A): Promise<R> {
-    // Playwright oczekuje PageFunction<Unboxed<A>, R>, nasza sygnatura jest prostsza.
-    // Na granicy adaptera rzutujemy przez unknown; zachowanie w runtime jest identyczne.
+    // Playwright expects PageFunction<Unboxed<A>, R>; our signature is simpler.
+    // At the adapter boundary we cast through unknown; runtime behaviour is identical.
     const evaluate = this.page.evaluate.bind(this.page) as unknown as (
       pageFunction: (arg: A) => R | Promise<R>,
       arg?: A
@@ -236,7 +236,7 @@ export class PlaywrightBrowserSession implements IBrowserSession {
         const res = await fetch(url);
         if (res.ok) return;
       } catch {
-        // jeszcze nie wstal, probujemy dalej
+        // not up yet, keep retrying
       }
       await new Promise((r) => setTimeout(r, 300));
     }

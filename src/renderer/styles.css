@@ -491,22 +491,6 @@ table.modules th {
   overflow: auto;
 }
 
-/* ---------- Placeholder ---------- */
-.placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 70%;
-  text-align: center;
-  color: var(--text-dim);
-  gap: 8px;
-}
-.placeholder .icon {
-  font-size: 34px;
-  opacity: 0.5;
-}
-
 .empty {
   color: var(--text-dim);
   padding: 40px;

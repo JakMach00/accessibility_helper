@@ -7,7 +7,7 @@ let container: Container | null = null;
 
 // Portable build: electron-builder sets PORTABLE_EXECUTABLE_DIR to the folder that holds the
 // .exe. We keep data there (scan history, screenshots) instead of %APPDATA%, so the app
-// nie zostawiala sladow poza swoim katalogiem. Musi byc przed buildContainer (czyta userData).
+// leaves no traces outside its own folder. Must run before buildContainer (which reads userData).
 const portableDir = process.env['PORTABLE_EXECUTABLE_DIR'];
 if (portableDir) {
   app.setPath('userData', join(portableDir, 'wcag-auditor-data'));

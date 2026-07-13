@@ -6,7 +6,7 @@ import type {
   WcagReferenceDTO
 } from '@shared/types';
 
-// Encja domenowa Issue jest strukturalnie zgodna z IssueDTO (dane transferowe),
+// The Issue domain entity is structurally compatible with IssueDTO (the transfer type),
 // but we build it via a factory that enforces invariants and defaults.
 export type Issue = IssueDTO;
 

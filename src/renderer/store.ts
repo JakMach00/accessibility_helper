@@ -133,7 +133,7 @@ export const useStore = create<AppState>((set, get) => ({
   connect: async (mode, startUrl) => {
     set({ error: null });
     try {
-      // Nie przekazujemy pustego adresu ani placeholdera "https://" jako startUrl.
+      // Do not pass an empty address or the "https://" placeholder as startUrl.
       const clean = startUrl && startUrl.trim() && startUrl.trim() !== 'https://' ? startUrl.trim() : undefined;
       const result = await window.api.connect(clean ? { mode, startUrl: clean } : { mode });
       set({

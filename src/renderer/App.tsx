@@ -1,27 +1,17 @@
 import { useEffect } from 'react';
-import { useStore, type TabId } from './store';
+import { useStore } from './store';
 import { Topbar } from './components/Topbar';
 import { Sidebar } from './components/Sidebar';
 import { Overview } from './components/Overview';
 import { IssuesView } from './components/IssuesView';
-import { ExportPanel, Placeholder, ScreenshotsPanel } from './components/Panels';
-
-const MODULE_TAB_NAMES: Partial<Record<TabId, string>> = {
-  'keyboard-nav': 'Keyboard Navigation',
-  contrast: 'Contrast Checker',
-  'aria-audit': 'ARIA Audit',
-  nvda: 'NVDA Simulation',
-  'zoom-reflow': 'Zoom / Reflow'
-};
+import { ExportPanel, ScreenshotsPanel } from './components/Panels';
 
 export function App() {
-  const { init, activeTab, running, progress, error, modules } = useStore();
+  const { init, activeTab, running, progress, error } = useStore();
 
   useEffect(() => {
     void init();
   }, [init]);
-
-  const isImplemented = (moduleId: string) => modules.find((m) => m.id === moduleId)?.implemented ?? false;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -33,10 +23,8 @@ export function App() {
         return <ScreenshotsPanel />;
       case 'export':
         return <ExportPanel />;
-      default: {
-        if (isImplemented(activeTab)) return <IssuesView moduleId={activeTab} />;
-        return <Placeholder name={MODULE_TAB_NAMES[activeTab] ?? activeTab} />;
-      }
+      default:
+        return <IssuesView moduleId={activeTab} />;
     }
   };
 
