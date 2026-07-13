@@ -74,7 +74,8 @@ export class ContrastModule implements IAuditModule {
               scanId,
               label: `contrast-${state}-${candidate.tag}`,
               index: issueNumber,
-              box: candidate.box
+              box: candidate.box,
+              cssSelector: candidate.cssSelector
             });
             screenshotPath = result.path;
             screenshotBudget -= 1;

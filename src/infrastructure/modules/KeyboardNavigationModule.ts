@@ -35,10 +35,10 @@ export class KeyboardNavigationModule implements IAuditModule {
     let screenshotBudget = MAX_SCREENSHOTS;
     let issueNumber = 0;
 
-    const capture = async (label: string, box: BoundingBoxDTO | null): Promise<string | null> => {
+    const capture = async (label: string, box: BoundingBoxDTO | null, cssSelector: string): Promise<string | null> => {
       if (!box || screenshotBudget <= 0) return null;
       try {
-        const shot = await screenshots.capture(page, { scanId, label, index: issueNumber, box });
+        const shot = await screenshots.capture(page, { scanId, label, index: issueNumber, box, cssSelector });
         screenshotBudget -= 1;
         return shot.path;
       } catch (error) {
@@ -51,7 +51,7 @@ export class KeyboardNavigationModule implements IAuditModule {
     const clickables = data.clickables.slice(0, CAP_PER_CATEGORY);
     for (const c of clickables) {
       issueNumber += 1;
-      const screenshotPath = await capture(`clickable-${c.tag}`, c.box);
+      const screenshotPath = await capture(`clickable-${c.tag}`, c.box, c.cssSelector);
       issues.push(
         createIssue({
           moduleId: MODULE_ID,
@@ -108,7 +108,7 @@ export class KeyboardNavigationModule implements IAuditModule {
       if (!desc) continue;
       noFocusIndicator += 1;
       issueNumber += 1;
-      const screenshotPath = await capture(`focus-${desc.tag}`, desc.box);
+      const screenshotPath = await capture(`focus-${desc.tag}`, desc.box, desc.cssSelector);
       issues.push(
         createIssue({
           moduleId: MODULE_ID,
@@ -177,7 +177,7 @@ export class KeyboardNavigationModule implements IAuditModule {
     if (trap.trapIndex !== null) {
       const desc = focusableById.get(trap.trapIndex);
       issueNumber += 1;
-      const screenshotPath = desc ? await capture(`trap-${desc.tag}`, desc.box) : null;
+      const screenshotPath = desc ? await capture(`trap-${desc.tag}`, desc.box, desc.cssSelector) : null;
       issues.push(
         createIssue({
           moduleId: MODULE_ID,

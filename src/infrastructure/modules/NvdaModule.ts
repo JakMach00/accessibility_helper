@@ -63,7 +63,8 @@ export class NvdaModule implements IAuditModule {
             scanId,
             label: `nvda-noname-${node.role}`,
             index: issueNumber,
-            box: node.box
+            box: node.box,
+            cssSelector: node.cssSelector
           });
           screenshotPath = shot.path;
           screenshotBudget -= 1;

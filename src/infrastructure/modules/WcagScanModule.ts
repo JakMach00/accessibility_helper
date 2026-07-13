@@ -122,7 +122,8 @@ export class WcagScanModule implements IAuditModule {
             scanId,
             label: entry.rule.id,
             index: issueNumber,
-            box: g.box
+            box: g.box,
+            cssSelector: entry.node.target[0] ?? ''
           });
           screenshotPath = shot.path;
           screenshotBudget -= 1;

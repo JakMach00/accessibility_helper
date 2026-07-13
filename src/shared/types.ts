@@ -195,3 +195,36 @@ export interface AvailableModuleDTO {
   name: string;
   implemented: boolean;
 }
+
+// --- Jira integration ---
+export interface JiraConfigInput {
+  baseUrl: string; // e.g. https://your-domain.atlassian.net
+  email: string; // Atlassian account email (Basic auth user)
+  apiToken: string; // Atlassian API token
+  projectKey: string; // e.g. ACC
+  issueType: string; // e.g. Bug
+  component: string; // optional component name ('' = none)
+  labels: string[]; // default labels applied to every created issue
+}
+
+// Returned to the renderer without the secret token.
+export interface JiraConfigView {
+  baseUrl: string;
+  email: string;
+  projectKey: string;
+  issueType: string;
+  component: string;
+  labels: string[];
+  hasToken: boolean;
+}
+
+export interface JiraIssuePayload {
+  summary: string;
+  description: string; // plain text; converted to ADF by the main process
+  extraLabels?: string[];
+}
+
+export interface JiraCreateResult {
+  key: string; // e.g. ACC-123
+  url: string; // browse URL
+}

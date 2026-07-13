@@ -84,7 +84,8 @@ export class AriaModule implements IAuditModule {
             scanId,
             label: `aria-${finding.kind}`,
             index: issueNumber,
-            box: finding.box
+            box: finding.box,
+            cssSelector: finding.cssSelector
           });
           screenshotPath = shot.path;
           screenshotBudget -= 1;

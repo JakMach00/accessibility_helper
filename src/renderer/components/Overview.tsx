@@ -38,7 +38,7 @@ export function Overview() {
             ? 'PASS'
             : currentScan.overallStatus === 'fail'
               ? 'FAIL'
-              : 'DO WERYFIKACJI'}
+              : 'NEEDS REVIEW'}
         </span>
       </div>
 

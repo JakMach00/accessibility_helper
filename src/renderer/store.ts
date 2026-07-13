@@ -10,7 +10,8 @@ import type {
   ReportFormat,
   ScanResultDTO,
   ScanSummaryDTO,
-  Severity
+  Severity,
+  WcagLevel
 } from '@shared/types';
 
 export type TabId =
@@ -27,7 +28,10 @@ export type TabId =
 export interface Filters {
   search: string;
   severities: Set<Severity>;
+  levels: Set<WcagLevel>;
   onlyFails: boolean;
+  groupByCriterion: boolean;
+  showIgnored: boolean;
 }
 
 interface AppState {
@@ -52,8 +56,9 @@ interface AppState {
   activeTab: TabId;
   selectedIssueId: string | null;
   filters: Filters;
+  ignoredKeys: Set<string>;
 
-  // akcje
+  // actions
   init: () => Promise<void>;
   connect: (mode: ConnectMode, startUrl?: string) => Promise<void>;
   refreshTargets: () => Promise<void>;
@@ -68,6 +73,11 @@ interface AppState {
   toggleSeverity: (sev: Severity) => void;
   toggleOnlyFails: () => void;
   setCompareBase: (id: string | null) => void;
+  toggleLevel: (level: WcagLevel) => void;
+  toggleGroupBy: () => void;
+  toggleShowIgnored: () => void;
+  ignoreIssue: (issue: IssueDTO) => Promise<void>;
+  unignoreIssue: (issue: IssueDTO) => Promise<void>;
   toggleTheme: () => void;
 }
 
@@ -102,12 +112,21 @@ export const useStore = create<AppState>((set, get) => ({
   compareBaseId: null,
   activeTab: 'overview',
   selectedIssueId: null,
-  filters: { search: '', severities: new Set(ALL_SEVERITIES), onlyFails: false },
+  filters: {
+    search: '',
+    severities: new Set(ALL_SEVERITIES),
+    levels: new Set<WcagLevel>(['A', 'AA', 'AAA']),
+    onlyFails: false,
+    groupByCriterion: false,
+    showIgnored: false
+  },
+  ignoredKeys: new Set<string>(),
 
   init: async () => {
     window.api.onProgress((event) => set({ progress: event }));
     const modules = await window.api.listModules();
-    set({ modules });
+    const ignored = await window.api.listIgnored();
+    set({ modules, ignoredKeys: new Set(ignored) });
     await get().loadHistory();
   },
 
@@ -198,6 +217,31 @@ export const useStore = create<AppState>((set, get) => ({
   toggleOnlyFails: () => set((s) => ({ filters: { ...s.filters, onlyFails: !s.filters.onlyFails } })),
   setCompareBase: (id) => set({ compareBaseId: id }),
 
+  toggleLevel: (level) =>
+    set((s) => {
+      const next = new Set(s.filters.levels);
+      if (next.has(level)) next.delete(level);
+      else next.add(level);
+      return { filters: { ...s.filters, levels: next } };
+    }),
+  toggleGroupBy: () => set((s) => ({ filters: { ...s.filters, groupByCriterion: !s.filters.groupByCriterion } })),
+  toggleShowIgnored: () => set((s) => ({ filters: { ...s.filters, showIgnored: !s.filters.showIgnored } })),
+
+  ignoreIssue: async (issue) => {
+    const key = issueIdentityKey(issue);
+    await window.api.addIgnored(key);
+    set((s) => ({ ignoredKeys: new Set(s.ignoredKeys).add(key) }));
+  },
+  unignoreIssue: async (issue) => {
+    const key = issueIdentityKey(issue);
+    await window.api.removeIgnored(key);
+    set((s) => {
+      const next = new Set(s.ignoredKeys);
+      next.delete(key);
+      return { ignoredKeys: next };
+    });
+  },
+
   toggleTheme: () => {
     const next: Theme = get().theme === 'dark' ? 'light' : 'dark';
     applyTheme(next);
@@ -207,17 +251,32 @@ export const useStore = create<AppState>((set, get) => ({
 }));
 
 
+// Stable identity of an issue, matching the domain regression key.
+export function issueIdentityKey(issue: IssueDTO): string {
+  const wcag = issue.wcagReferences
+    .map((r) => r.criterion)
+    .sort()
+    .join(',');
+  return `${issue.moduleId}::${issue.title}::${wcag}::${issue.cssSelector}`;
+}
+
 // Selector: issues of the given module after filters are applied.
 export function selectFilteredIssues(state: AppState, moduleId: string): IssueDTO[] {
   const scan = state.currentScan;
   if (!scan) return [];
   const module = scan.modules.find((m) => m.moduleId === moduleId);
   if (!module) return [];
-  const { search, severities, onlyFails } = state.filters;
+  const { search, severities, levels, onlyFails, showIgnored } = state.filters;
   const term = search.trim().toLowerCase();
+  const allLevels = levels.size === 0 || levels.size >= 3;
   return module.issues.filter((issue) => {
     if (!severities.has(issue.severity)) return false;
     if (onlyFails && issue.status !== 'fail') return false;
+    if (!showIgnored && state.ignoredKeys.has(issueIdentityKey(issue))) return false;
+    if (!allLevels) {
+      const hasLevel = issue.wcagReferences.some((r) => levels.has(r.level));
+      if (issue.wcagReferences.length > 0 && !hasLevel) return false;
+    }
     if (term) {
       const hay = `${issue.title} ${issue.description} ${issue.cssSelector} ${issue.wcagReferences
         .map((r) => r.criterion)

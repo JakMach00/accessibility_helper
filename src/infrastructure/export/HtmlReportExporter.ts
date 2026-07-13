@@ -48,7 +48,7 @@ export class HtmlReportExporter implements IReportExporter {
         ? '<span class="status pass">PASS</span>'
         : scan.overallStatus === 'fail'
           ? '<span class="status fail">FAIL</span>'
-          : '<span class="status review">DO WERYFIKACJI</span>';
+          : '<span class="status review">NEEDS REVIEW</span>';
 
     const moduleSections: string[] = [];
     for (const module of scan.modules) {

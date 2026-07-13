@@ -1,6 +1,6 @@
 {
   "name": "wcag-auditor",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "Desktopowe narzedzie do automatycznej analizy WCAG 2.2 dla testerow Accessibility i QA.",
   "author": "Jakub",
   "license": "MIT",

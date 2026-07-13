@@ -9,7 +9,11 @@ import type {
   RunAuditOptions,
   ScanDiffDTO,
   ScanResultDTO,
-  ScanSummaryDTO
+  ScanSummaryDTO,
+  JiraConfigView,
+  JiraConfigInput,
+  JiraIssuePayload,
+  JiraCreateResult
 } from './types';
 
 // Nazwy kanalow IPC w jednym miejscu, zeby uniknac literalow-magii.
@@ -27,7 +31,13 @@ export const IPC = {
   reportExport: 'report:export',
   domInspect: 'dom:inspect',
   screenshotRead: 'screenshot:read',
-  shellOpenScreenshots: 'shell:openScreenshots'
+  shellOpenScreenshots: 'shell:openScreenshots',
+  ignoreList: 'ignore:list',
+  ignoreAdd: 'ignore:add',
+  ignoreRemove: 'ignore:remove',
+  jiraGetConfig: 'jira:getConfig',
+  jiraSaveConfig: 'jira:saveConfig',
+  jiraCreateIssue: 'jira:createIssue'
 } as const;
 
 // Kontrakt API wystawianego przez preload jako window.api.
@@ -47,4 +57,10 @@ export interface RendererApi {
   inspectDom(targetId: string, cssSelector: string): Promise<DomInspectionDTO>;
   readScreenshot(path: string): Promise<string>; // zwraca data URL lub pusty string
   openScreenshotsFolder(): Promise<void>;
+  listIgnored(): Promise<string[]>;
+  addIgnored(key: string): Promise<void>;
+  removeIgnored(key: string): Promise<void>;
+  getJiraConfig(): Promise<JiraConfigView>;
+  saveJiraConfig(config: JiraConfigInput): Promise<void>;
+  createJiraIssue(payload: JiraIssuePayload): Promise<JiraCreateResult>;
 }

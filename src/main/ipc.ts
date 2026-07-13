@@ -1,17 +1,21 @@
-import { readFile } from 'node:fs/promises';
-import { BrowserWindow, dialog, ipcMain, shell, type WebContents } from 'electron';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { app, BrowserWindow, dialog, ipcMain, shell, type WebContents } from 'electron';
 import type {
   AuditProgressEvent,
   ConnectOptions,
   DomInspectionDTO,
   ExportOptions,
   ExportResultDTO,
-  RunAuditOptions
+  RunAuditOptions,
+  JiraConfigInput,
+  JiraIssuePayload
 } from '@shared/types';
 import { IPC } from '@shared/ipc';
 import type { IProgressReporter } from '@core/domain/ports';
 import { inspectNode } from '@infra/browser/domScripts';
 import type { Container } from './composition';
+import { createJiraIssue, getJiraConfig, saveJiraConfig } from './jira';
 
 // Progress reporter that sends events to the specific window that started the scan.
 class WebContentsProgressReporter implements IProgressReporter {
@@ -119,4 +123,33 @@ export function registerIpcHandlers(container: Container): void {
       return '';
     }
   });
+
+  // --- Ignore list (accepted issues persisted across scans) ---
+  const ignorePath = (): string => join(app.getPath('userData'), 'ignore-list.json');
+  const readIgnore = async (): Promise<string[]> => {
+    try {
+      const arr = JSON.parse(await readFile(ignorePath(), 'utf-8')) as unknown;
+      return Array.isArray(arr) ? (arr.filter((x) => typeof x === 'string') as string[]) : [];
+    } catch {
+      return [];
+    }
+  };
+  const writeIgnore = async (keys: string[]): Promise<void> => {
+    await writeFile(ignorePath(), JSON.stringify([...new Set(keys)], null, 2), 'utf-8');
+  };
+
+  ipcMain.handle(IPC.ignoreList, async (): Promise<string[]> => readIgnore());
+  ipcMain.handle(IPC.ignoreAdd, async (_e, key: string): Promise<void> => {
+    const keys = await readIgnore();
+    if (!keys.includes(key)) await writeIgnore([...keys, key]);
+  });
+  ipcMain.handle(IPC.ignoreRemove, async (_e, key: string): Promise<void> => {
+    const keys = await readIgnore();
+    await writeIgnore(keys.filter((k) => k !== key));
+  });
+
+  // --- Jira ---
+  ipcMain.handle(IPC.jiraGetConfig, async () => getJiraConfig());
+  ipcMain.handle(IPC.jiraSaveConfig, async (_e, config: JiraConfigInput) => saveJiraConfig(config));
+  ipcMain.handle(IPC.jiraCreateIssue, async (_e, payload: JiraIssuePayload) => createJiraIssue(payload));
 }

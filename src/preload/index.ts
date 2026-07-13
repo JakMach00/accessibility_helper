@@ -8,6 +8,10 @@ import type {
   ExportOptions,
   ExportResultDTO,
   RunAuditOptions,
+  JiraConfigView,
+  JiraConfigInput,
+  JiraIssuePayload,
+  JiraCreateResult,
   ScanDiffDTO,
   ScanResultDTO,
   ScanSummaryDTO
@@ -35,7 +39,14 @@ const api: RendererApi = {
   inspectDom: (targetId: string, cssSelector: string): Promise<DomInspectionDTO> =>
     ipcRenderer.invoke(IPC.domInspect, targetId, cssSelector),
   readScreenshot: (path: string): Promise<string> => ipcRenderer.invoke(IPC.screenshotRead, path),
-  openScreenshotsFolder: (): Promise<void> => ipcRenderer.invoke(IPC.shellOpenScreenshots)
+  openScreenshotsFolder: (): Promise<void> => ipcRenderer.invoke(IPC.shellOpenScreenshots),
+  listIgnored: (): Promise<string[]> => ipcRenderer.invoke(IPC.ignoreList),
+  addIgnored: (key: string): Promise<void> => ipcRenderer.invoke(IPC.ignoreAdd, key),
+  removeIgnored: (key: string): Promise<void> => ipcRenderer.invoke(IPC.ignoreRemove, key),
+  getJiraConfig: (): Promise<JiraConfigView> => ipcRenderer.invoke(IPC.jiraGetConfig),
+  saveJiraConfig: (config: JiraConfigInput): Promise<void> => ipcRenderer.invoke(IPC.jiraSaveConfig, config),
+  createJiraIssue: (payload: JiraIssuePayload): Promise<JiraCreateResult> =>
+    ipcRenderer.invoke(IPC.jiraCreateIssue, payload)
 };
 
 contextBridge.exposeInMainWorld('api', api);

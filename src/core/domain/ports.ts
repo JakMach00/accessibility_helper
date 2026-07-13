@@ -90,9 +90,10 @@ export interface IModuleRegistry {
 // ---------------------------------------------------------------------------
 export interface CaptureOptions {
   scanId: string;
-  label: string; // uzywane w nazwie pliku
-  index: number; // numer bledu na zrzucie
-  box: BoundingBoxDTO | null; // null = pelny viewport bez adnotacji
+  label: string; // used in the file name
+  index: number; // issue number on the screenshot
+  box: BoundingBoxDTO | null; // null = full viewport without annotation
+  cssSelector?: string; // element selector, used to re-measure its live position before capture
 }
 
 export interface IScreenshotService {
