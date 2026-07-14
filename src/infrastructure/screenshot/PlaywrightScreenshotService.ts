@@ -2,7 +2,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { BoundingBoxDTO } from '@shared/types';
 import type { CaptureOptions, IBrowserPage, IScreenshotService, ILogger } from '@core/domain/ports';
-import { drawOverlay, removeOverlay } from '@infra/browser/domScripts';
+import {
+  drawOverlay,
+  measureForShot,
+  removeOverlay,
+  type ShotMeasureInput,
+  type ShotMeasureResult
+} from '@infra/browser/domScripts';
 
 export class PlaywrightScreenshotService implements IScreenshotService {
   constructor(
@@ -28,22 +34,26 @@ export class PlaywrightScreenshotService implements IScreenshotService {
       if (options.box) {
         let viewportBox: BoundingBoxDTO | null = null;
 
-        // Preferred path: re-measure the element live. scrollIntoView handles nested
-        // scroll containers, sticky and fixed positioning; getBoundingClientRect then
-        // returns the true viewport rectangle, so the overlay lands exactly on it.
         if (options.cssSelector) {
-          viewportBox = await page.evaluate((selector: string) => {
-            const el = selector ? (document.querySelector(selector) as HTMLElement | null) : null;
-            if (!el) return null;
-            el.scrollIntoView({ block: 'center', inline: 'nearest' });
-            const r = el.getBoundingClientRect();
-            if (r.width === 0 && r.height === 0) return null;
-            return { x: r.left, y: r.top, width: r.width, height: r.height };
-          }, options.cssSelector);
-        }
+          // Re-measure the element live. This handles nested scroll containers,
+          // sticky positioning and carousels that moved since the scan.
+          const measured = await page.evaluate<ShotMeasureResult, ShotMeasureInput>(measureForShot, {
+            selector: options.cssSelector,
+            scroll: options.skipScroll !== true
+          });
 
-        // Fallback: use the stored page-absolute box adjusted by the actual scroll.
-        if (!viewportBox) {
+          if (measured.state === 'ok') {
+            viewportBox = measured.box;
+          } else {
+            // The element is gone or not visible right now (collapsed menu, rotated
+            // carousel slide, off-screen). Drawing the stored rectangle would mark an
+            // empty area, so we skip the screenshot instead of producing a misleading one.
+            this.logger.warn(`Screenshot skipped (${options.label}): element ${measured.state}`);
+            return { path: '', box: null };
+          }
+        } else {
+          // No selector available: fall back to the stored page-absolute box,
+          // adjusted by the scroll position actually reached.
           const box = options.box;
           const targetY = Math.max(0, box.y - 100);
           const scroll = await page.evaluate((y: number) => {

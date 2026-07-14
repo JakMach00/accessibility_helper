@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { BoundingBoxDTO, ViewportDTO } from '@shared/types';
 import type { AuditContext, IBrowserPage, ILogger, IScreenshotService } from '@core/domain/ports';
 import {
-  clearHoverState,
   collectDynamicCandidates,
   measureReveal,
   snapshotVisible,
+  waitForReveal,
   type DynamicScanReport,
   type RevealResult,
   type RevealSnapshot
@@ -17,6 +17,7 @@ const EMPTY_SNAPSHOT: RevealSnapshot = { visibleCount: 5, signature: 'A|B' };
 
 class FakePage implements IBrowserPage {
   hovered: string[] = [];
+  mouseMovedAway = 0;
 
   constructor(
     private readonly report: DynamicScanReport,
@@ -49,7 +50,7 @@ class FakePage implements IBrowserPage {
       };
       return result as unknown as R;
     }
-    if (f === clearHoverState) return undefined as unknown as R;
+    if (f === waitForReveal) return undefined as unknown as R;
     return undefined as unknown as R;
   }
   async addScriptTag(): Promise<void> {}
@@ -63,6 +64,9 @@ class FakePage implements IBrowserPage {
   async forcePseudoStates(): Promise<void> {}
   async hover(cssSelector: string): Promise<void> {
     this.hovered.push(cssSelector);
+  }
+  async moveMouseAway(): Promise<void> {
+    this.mouseMovedAway += 1;
   }
 }
 
@@ -194,5 +198,36 @@ describe('DynamicContentModule', () => {
     const result = await new DynamicContentModule().run(ctx(page));
 
     expect(result.issues).toHaveLength(0);
+  });
+});
+
+describe('DynamicContentModule pointer handling', () => {
+  it('moves the pointer away before every probe so an open menu cannot block the next one', async () => {
+    const candidate = (selector: string, text: string) => ({
+      cssSelector: selector,
+      tag: 'a',
+      text,
+      html: `<a href="#">${text}</a>`,
+      box: BOX,
+      focusable: false,
+      hasPopupAttr: false,
+      expandedBefore: null
+    });
+    const report: DynamicScanReport = {
+      totalConsidered: 3,
+      candidates: [candidate('a.one', 'One'), candidate('a.two', 'Two'), candidate('a.three', 'Three')]
+    };
+    const page = new FakePage(report, {
+      'a.one': revealed('a.one'),
+      'a.two': revealed('a.two'),
+      'a.three': revealed('a.three')
+    });
+
+    const result = await new DynamicContentModule().run(ctx(page));
+
+    // Every candidate is probed, not just the first one.
+    expect(page.hovered).toEqual(['a.one', 'a.two', 'a.three']);
+    expect(page.mouseMovedAway).toBe(3);
+    expect(result.issues).toHaveLength(3);
   });
 });

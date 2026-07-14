@@ -167,3 +167,46 @@ export function removeOverlay(id: string): void {
   const el = document.getElementById(id);
   if (el) el.remove();
 }
+
+export interface ShotMeasureInput {
+  selector: string;
+  scroll: boolean;
+}
+
+export type ShotMeasureResult =
+  | { state: 'ok'; box: BoundingBoxDTO }
+  | { state: 'hidden' }
+  | { state: 'missing' };
+
+// Measures an element's live viewport rectangle right before a screenshot.
+// Returns 'hidden' when the element exists but cannot be annotated meaningfully
+// (collapsed menu, rotated carousel slide, off-screen), so the caller can skip
+// the screenshot instead of drawing a rectangle over the wrong place.
+export function measureForShot(arg: ShotMeasureInput): ShotMeasureResult {
+  let el: HTMLElement | null = null;
+  try {
+    el = arg.selector ? (document.querySelector(arg.selector) as HTMLElement | null) : null;
+  } catch {
+    return { state: 'missing' }; // invalid selector
+  }
+  if (!el) return { state: 'missing' };
+
+  const style = window.getComputedStyle(el);
+  if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) {
+    return { state: 'hidden' };
+  }
+
+  if (arg.scroll) {
+    el.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }
+
+  const r = el.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return { state: 'hidden' };
+
+  // Outside the viewport: the screenshot would not show it at all.
+  if (r.bottom <= 0 || r.right <= 0 || r.top >= window.innerHeight || r.left >= window.innerWidth) {
+    return { state: 'hidden' };
+  }
+
+  return { state: 'ok', box: { x: r.left, y: r.top, width: r.width, height: r.height } };
+}

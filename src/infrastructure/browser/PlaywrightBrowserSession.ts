@@ -137,6 +137,12 @@ export class PlaywrightBrowserPage implements IBrowserPage {
     // caller treats a failure as "nothing to reveal" and moves on.
     await this.page.hover(cssSelector, { timeout: 2000 });
   }
+
+  async moveMouseAway(): Promise<void> {
+    // A real pointer move is required: synthetic events do not clear CSS :hover,
+    // so an open menu would stay open and cover the next element to probe.
+    await this.page.mouse.move(0, 0);
+  }
 }
 
 export class PlaywrightBrowserSession implements IBrowserSession {

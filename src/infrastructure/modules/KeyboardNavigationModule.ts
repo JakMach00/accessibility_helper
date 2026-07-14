@@ -39,6 +39,7 @@ export class KeyboardNavigationModule implements IAuditModule {
       if (!box || screenshotBudget <= 0) return null;
       try {
         const shot = await screenshots.capture(page, { scanId, label, index: issueNumber, box, cssSelector });
+        if (!shot.path) return null;
         screenshotBudget -= 1;
         return shot.path;
       } catch (error) {

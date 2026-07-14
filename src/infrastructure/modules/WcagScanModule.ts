@@ -125,8 +125,8 @@ export class WcagScanModule implements IAuditModule {
             box: g.box,
             cssSelector: entry.node.target[0] ?? ''
           });
-          screenshotPath = shot.path;
-          screenshotBudget -= 1;
+          screenshotPath = shot.path || null;
+          if (screenshotPath) screenshotBudget -= 1;
         } catch (error) {
           logger.warn(`WCAG: screenshot error for ${entry.rule.id}`, error);
         }

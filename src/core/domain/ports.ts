@@ -47,6 +47,9 @@ export interface IBrowserPage {
   // Hover over an element, to audit content that only appears on hover.
   // Optional: test fakes may leave it unimplemented.
   hover?(cssSelector: string): Promise<void>;
+  // Move the real pointer away, closing anything held open by :hover.
+  // Optional: test fakes may leave it unimplemented.
+  moveMouseAway?(): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +100,9 @@ export interface CaptureOptions {
   index: number; // issue number on the screenshot
   box: BoundingBoxDTO | null; // null = full viewport without annotation
   cssSelector?: string; // element selector, used to re-measure its live position before capture
+  // Skip scrolling the element into view. Needed when scrolling would destroy the
+  // state being captured (for example a menu that is only open while hovered).
+  skipScroll?: boolean;
 }
 
 export interface IScreenshotService {

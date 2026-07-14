@@ -66,8 +66,8 @@ export class NvdaModule implements IAuditModule {
             box: node.box,
             cssSelector: node.cssSelector
           });
-          screenshotPath = shot.path;
-          screenshotBudget -= 1;
+          screenshotPath = shot.path || null;
+          if (screenshotPath) screenshotBudget -= 1;
         } catch (error) {
           logger.warn('NVDA: screenshot error', error);
         }

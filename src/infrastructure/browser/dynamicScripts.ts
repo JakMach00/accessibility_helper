@@ -233,9 +233,10 @@ export function measureReveal(arg: { before: RevealSnapshot; triggerSelector: st
   };
 }
 
-// Clears hover state by moving the pointer away (best effort: hover a neutral corner).
-export function clearHoverState(): void {
-  const el = document.elementFromPoint(1, 1);
-  if (el instanceof HTMLElement) el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-  document.body.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 1, clientY: 1 }));
+// Waits for a menu/tooltip transition to finish before measuring what appeared.
+// Many menus fade or slide in, so measuring immediately after hovering sees nothing.
+export function waitForReveal(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 350);
+  });
 }

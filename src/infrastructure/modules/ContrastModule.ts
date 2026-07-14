@@ -77,8 +77,8 @@ export class ContrastModule implements IAuditModule {
               box: candidate.box,
               cssSelector: candidate.cssSelector
             });
-            screenshotPath = result.path;
-            screenshotBudget -= 1;
+            screenshotPath = result.path || null;
+            if (screenshotPath) screenshotBudget -= 1;
           } catch (error) {
             logger.warn(`Contrast: screenshot error ${state}`, error);
           }

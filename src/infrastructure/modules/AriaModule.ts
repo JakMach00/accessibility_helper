@@ -87,8 +87,8 @@ export class AriaModule implements IAuditModule {
             box: finding.box,
             cssSelector: finding.cssSelector
           });
-          screenshotPath = shot.path;
-          screenshotBudget -= 1;
+          screenshotPath = shot.path || null;
+          if (screenshotPath) screenshotBudget -= 1;
         } catch (error) {
           logger.warn(`ARIA: screenshot error ${finding.kind}`, error);
         }

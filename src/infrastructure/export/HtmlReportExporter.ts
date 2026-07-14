@@ -151,7 +151,7 @@ export class HtmlReportExporter implements IReportExporter {
   <div class="kv"><strong>Scan time:</strong> ${(scan.durationMs / 1000).toFixed(1)} s</div>
 
   <div class="summary">
-    <div class="card"><div class="n">${scan.counts.total}</div><div class="l">Wszystkie</div></div>
+    <div class="card"><div class="n">${scan.counts.total}</div><div class="l">Total</div></div>
     <div class="card"><div class="n" style="color:${SEV_COLOR.critical}">${scan.counts.critical}</div><div class="l">Critical</div></div>
     <div class="card"><div class="n" style="color:${SEV_COLOR.serious}">${scan.counts.serious}</div><div class="l">Serious</div></div>
     <div class="card"><div class="n" style="color:${SEV_COLOR.moderate}">${scan.counts.moderate}</div><div class="l">Moderate</div></div>

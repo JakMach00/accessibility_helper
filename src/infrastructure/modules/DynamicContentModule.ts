@@ -4,10 +4,10 @@ import { buildModuleResult, type ModuleResult } from '@core/domain/ModuleResult'
 import { referenceByCriterion } from '@core/domain/WcagReference';
 import type { AuditContext, IAuditModule } from '@core/domain/ports';
 import {
-  clearHoverState,
   collectDynamicCandidates,
   measureReveal,
   snapshotVisible,
+  waitForReveal,
   type DynamicScanReport,
   type RevealResult,
   type RevealSnapshot
@@ -49,6 +49,12 @@ export class DynamicContentModule implements IAuditModule {
     for (const candidate of report.candidates) {
       if (!candidate.cssSelector) continue;
 
+      // Close anything still open from the previous probe. Without a real pointer
+      // move the previous menu stays open and covers the next trigger, which makes
+      // hovering it fail and silently skips every remaining island.
+      await page.moveMouseAway?.();
+      await page.evaluate(waitForReveal);
+
       const before = await page.evaluate<RevealSnapshot>(snapshotVisible);
 
       try {
@@ -59,15 +65,15 @@ export class DynamicContentModule implements IAuditModule {
       }
       hoverChecked += 1;
 
+      // Give the menu time to open (most use a CSS transition).
+      await page.evaluate(waitForReveal);
+
       const reveal = await page.evaluate<RevealResult, { before: RevealSnapshot; triggerSelector: string }>(
         measureReveal,
         { before, triggerSelector: candidate.cssSelector }
       );
 
-      if (!reveal.revealed) {
-        await page.evaluate(clearHoverState);
-        continue;
-      }
+      if (!reveal.revealed) continue;
       revealedCount += 1;
 
       // The core problem: content appears on hover but the trigger cannot be reached
@@ -80,7 +86,6 @@ export class DynamicContentModule implements IAuditModule {
 
       if (!keyboardUnreachable && !missingPopupSemantics) {
         // Reachable and declared: still worth a manual look, but not an issue.
-        await page.evaluate(clearHoverState);
         continue;
       }
 
@@ -93,10 +98,13 @@ export class DynamicContentModule implements IAuditModule {
             label: `dynamic-${candidate.tag}`,
             index: issueNumber,
             box: reveal.revealedBox,
-            cssSelector: reveal.revealedSelector
+            cssSelector: reveal.revealedSelector,
+            // Scrolling would move the trigger out from under the pointer and close
+            // the menu before the screenshot is taken.
+            skipScroll: true
           });
-          screenshotPath = shot.path;
-          screenshotBudget -= 1;
+          screenshotPath = shot.path || null;
+          if (screenshotPath) screenshotBudget -= 1;
         } catch (error) {
           logger.warn('Dynamic: screenshot error', error);
         }
@@ -146,7 +154,6 @@ export class DynamicContentModule implements IAuditModule {
         );
       }
 
-      await page.evaluate(clearHoverState);
     }
 
     logger.info(`Dynamic: ${issues.length} findings, ${revealedCount} hover reveals across ${hoverChecked} probes`);

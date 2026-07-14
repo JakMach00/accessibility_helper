@@ -129,7 +129,7 @@ export function collectKeyboardData(): KeyboardData {
     ].join('|');
   };
 
-  // --- Inwentarz elementow w kolejnosci Tab ---
+  // --- Inventory of elements in Tab order ---
   const FOCUSABLE_SELECTOR =
     'a[href], area[href], button, input, select, textarea, [tabindex], [contenteditable=""], [contenteditable="true"], audio[controls], video[controls], iframe, summary';
   const raw = Array.from(document.querySelectorAll(FOCUSABLE_SELECTOR)) as HTMLElement[];
