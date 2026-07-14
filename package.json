@@ -1,6 +1,6 @@
 {
   "name": "wcag-auditor",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Desktop tool for automated WCAG 2.2 accessibility auditing, aimed at QA and accessibility testers.",
   "author": "Jakub",
   "license": "MIT",

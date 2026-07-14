@@ -46,13 +46,13 @@ If policy prevents running the Node MSI installer, download Node.js as a ZIP arc
 
 ### Build on GitHub (no local tooling)
 
-The repository includes a GitHub Actions workflow (`.github/workflows/build-windows.yml`) that builds the Windows binaries on GitHub-hosted Windows runners:
+The repository includes a GitHub Actions workflow (`.github/workflows/build-windows.yml`) that builds the Windows app on GitHub-hosted Windows runners and publishes it as a `.zip`, so nothing is downloaded as a bare `.exe`:
 
 1. Push the project to GitHub (a private repository is fine).
-2. Open the Actions tab, select "Build Windows", and click "Run workflow" (or push a `v*` tag such as `v2.0.0`).
-3. After a few minutes, download the binaries from the run's Artifacts (`wcag-auditor-windows`). For tag builds they also appear under Releases.
+2. Open the Actions tab, select "Build Windows", and click "Run workflow" (or push a `v*` tag such as `v2.1.0`).
+3. After a few minutes, download `WCAG-Auditor-<version>.zip` from the run's Artifacts (`wcag-auditor-windows-zip`). For tag builds it also appears under Releases.
 
-The artifact contains `WCAG-Auditor-2.0.0-portable.exe` (a single, self-contained executable) and an installer. No local build is needed.
+Extract the `.zip` and run `WCAG-Auditor-<version>-portable.exe` inside. No installation and no local build are needed.
 
 ### Build locally
 
@@ -60,7 +60,7 @@ On a machine with Node.js:
 
 ```bash
 npm install                 # dependencies; also downloads Chromium for Playwright
-npm run dist:portable       # produces release\WCAG-Auditor-2.0.0-portable.exe
+npm run dist:portable       # produces release\WCAG-Auditor-2.1.0-portable.exe
 ```
 
 If a corporate proxy blocks the Chromium download, run `npm install --ignore-scripts` (the Edge and Chrome modes then work without a bundled Chromium).
@@ -71,9 +71,9 @@ For a live development preview with hot reload (no packaging): `npm run dev`.
 
 The build produces three artifacts in `release\`:
 
-- `npm run dist:portable` - a single `WCAG-Auditor-2.0.0-portable.exe`. Recommended for distribution: no installation, no administrator rights, and its data is stored next to the executable.
+- `npm run dist:portable` - a single `WCAG-Auditor-2.1.0-portable.exe`. Recommended for distribution: no installation, no administrator rights, and its data is stored next to the executable.
 - `npm run dist:dir` - an unpacked `win-unpacked\` folder containing `WCAG Auditor.exe`. Run the executable in place; data is stored in the user profile (`%APPDATA%`).
-- `npm run dist` - builds both of the above plus an NSIS installer (`WCAG Auditor Setup 2.0.0.exe`) with Start menu and desktop shortcuts and a per-user install.
+- `npm run dist` - builds both of the above plus an NSIS installer (`WCAG Auditor Setup 2.1.0.exe`) with Start menu and desktop shortcuts and a per-user install.
 
 For the portable build, scan history and screenshots are written to a `wcag-auditor-data` folder next to the executable, so removing the file leaves nothing behind.
 
