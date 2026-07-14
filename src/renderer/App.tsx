@@ -1,17 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from './store';
 import { Topbar } from './components/Topbar';
 import { Sidebar } from './components/Sidebar';
 import { Overview } from './components/Overview';
 import { IssuesView } from './components/IssuesView';
 import { ExportPanel, ScreenshotsPanel } from './components/Panels';
+import { SettingsModal } from './components/SettingsModal';
 
 export function App() {
   const { init, activeTab, running, progress, error } = useStore();
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     void init();
   }, [init]);
+
+  useEffect(() => {
+    window.api.onOpenSettings(() => setShowSettings(true));
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -48,6 +54,7 @@ export function App() {
           {renderContent()}
         </main>
       </div>
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

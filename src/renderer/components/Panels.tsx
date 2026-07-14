@@ -45,17 +45,17 @@ export function ExportPanel() {
 
   return (
     <div>
-      <h2 style={{ marginTop: 0 }}>Eksport raportu</h2>
+      <h2 style={{ marginTop: 0 }}>Report export</h2>
       <p style={{ color: 'var(--text-dim)' }}>
-        Raport zawiera logo, date, URL, liczbe bledow, status PASS/FAIL, zrzuty ekranu, rekomendacje, priorytet i
-        odwolania do WCAG 2.2.
+        The report includes the logo, date, URL, issue counts, PASS/FAIL status, screenshots, recommendations,
+        priority and WCAG 2.2 references.
       </p>
       <div className="export-row">
         <button className="primary" onClick={() => run('html')}>
-          Eksport HTML
+          Export HTML
         </button>
-        <button onClick={() => run('json')}>Eksport JSON</button>
-        <button onClick={() => run('csv')}>Eksport CSV</button>
+        <button onClick={() => run('json')}>Export JSON</button>
+        <button onClick={() => run('csv')}>Export CSV</button>
       </div>
       {lastPath && <div className="export-note">Zapisano: {lastPath}</div>}
     </div>

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain, shell, type WebContents } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell, type OpenDialogOptions, type WebContents } from 'electron';
 import type {
   AuditProgressEvent,
   ConnectOptions,
@@ -9,13 +9,15 @@ import type {
   ExportResultDTO,
   RunAuditOptions,
   JiraConfigInput,
-  JiraIssuePayload
+  JiraIssuePayload,
+  AppSettings
 } from '@shared/types';
 import { IPC } from '@shared/ipc';
 import type { IProgressReporter } from '@core/domain/ports';
 import { inspectNode } from '@infra/browser/domScripts';
 import type { Container } from './composition';
 import { createJiraIssue, getJiraConfig, saveJiraConfig } from './jira';
+import { getSettings, saveSettings } from './settings';
 
 // Progress reporter that sends events to the specific window that started the scan.
 class WebContentsProgressReporter implements IProgressReporter {
@@ -79,20 +81,29 @@ export function registerIpcHandlers(container: Container): void {
   });
 
   ipcMain.handle(IPC.reportExport, async (event, options: ExportOptions): Promise<ExportResultDTO | null> => {
-    // Pozwol uzytkownikowi wybrac miejsce zapisu.
-    const win = BrowserWindow.fromWebContents(event.sender);
+    const settings = await getSettings();
     const defaultName = `wcag-report-${new Date().toISOString().slice(0, 10)}.${options.format}`;
-    const dialogOptions = {
-      title: 'Save report',
-      defaultPath: defaultName,
-      filters: [{ name: options.format.toUpperCase(), extensions: [options.format] }]
-    };
-    const picked = win
-      ? await dialog.showSaveDialog(win, dialogOptions)
-      : await dialog.showSaveDialog(dialogOptions);
-    if (picked.canceled || !picked.filePath) return null;
 
-    const result = await container.exportReport.execute({ ...options, outputPath: picked.filePath });
+    let outputPath: string;
+    if (!settings.askEachTime && settings.exportDir) {
+      // Save straight to the configured default folder.
+      outputPath = join(settings.exportDir, defaultName);
+    } else {
+      // Ask where to save (default to the configured folder if one is set).
+      const win = BrowserWindow.fromWebContents(event.sender);
+      const dialogOptions = {
+        title: 'Save report',
+        defaultPath: settings.exportDir ? join(settings.exportDir, defaultName) : defaultName,
+        filters: [{ name: options.format.toUpperCase(), extensions: [options.format] }]
+      };
+      const picked = win
+        ? await dialog.showSaveDialog(win, dialogOptions)
+        : await dialog.showSaveDialog(dialogOptions);
+      if (picked.canceled || !picked.filePath) return null;
+      outputPath = picked.filePath;
+    }
+
+    const result = await container.exportReport.execute({ ...options, outputPath });
     // Reveal the saved file in the file explorer.
     shell.showItemInFolder(result.filePath);
     return result;
@@ -152,4 +163,18 @@ export function registerIpcHandlers(container: Container): void {
   ipcMain.handle(IPC.jiraGetConfig, async () => getJiraConfig());
   ipcMain.handle(IPC.jiraSaveConfig, async (_e, config: JiraConfigInput) => saveJiraConfig(config));
   ipcMain.handle(IPC.jiraCreateIssue, async (_e, payload: JiraIssuePayload) => createJiraIssue(payload));
+
+  // --- Settings ---
+  ipcMain.handle(IPC.settingsGet, async () => getSettings());
+  ipcMain.handle(IPC.settingsSave, async (_e, settings: AppSettings) => saveSettings(settings));
+  ipcMain.handle(IPC.settingsPickFolder, async (event): Promise<string | null> => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    const opts: OpenDialogOptions = {
+      title: 'Choose a default folder',
+      properties: ['openDirectory', 'createDirectory']
+    };
+    const picked = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+    if (picked.canceled || picked.filePaths.length === 0) return null;
+    return picked.filePaths[0] ?? null;
+  });
 }

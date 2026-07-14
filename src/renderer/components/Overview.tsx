@@ -6,14 +6,16 @@ import { humanizeError } from '../errors';
 export function Overview() {
   const { currentScan, history, openScan, compareBaseId, setCompareBase } = useStore();
   const [diff, setDiff] = useState<ScanDiffDTO | null>(null);
+  const [compareError, setCompareError] = useState('');
 
   const runCompare = async (targetId: string) => {
     if (!compareBaseId) return;
+    setCompareError('');
     try {
       const result = await window.api.historyCompare(compareBaseId, targetId);
       setDiff(result);
     } catch (e) {
-      alert(humanizeError(e));
+      setCompareError(humanizeError(e));
     }
   };
 
@@ -66,7 +68,7 @@ export function Overview() {
         <span className="k">Scan time</span>
         <span>{(currentScan.durationMs / 1000).toFixed(1)} s</span>
         <span className="k">Data</span>
-        <span>{new Date(currentScan.finishedAt).toLocaleString('pl-PL')}</span>
+        <span>{new Date(currentScan.finishedAt).toLocaleString('en-GB')}</span>
       </div>
 
       <div className="section-title">Modules</div>
@@ -110,21 +112,22 @@ export function Overview() {
               <option value="">select a base scan</option>
               {history.map((h) => (
                 <option key={h.id} value={h.id}>
-                  {new Date(h.finishedAt).toLocaleString('pl-PL')} - {h.url}
+                  {new Date(h.finishedAt).toLocaleString('en-GB')} - {h.url}
                 </option>
               ))}
             </select>
             <button disabled={!compareBaseId} onClick={() => runCompare(currentScan.id)}>
-              Porownaj z aktualnym
+              Compare with current
             </button>
           </div>
+          {compareError && <div className="detail-error">{compareError}</div>}
           {diff && (
             <div style={{ marginTop: 12, fontSize: 13 }}>
               <span style={{ color: 'var(--fail)' }}>New (regressions): {diff.regressionCount}</span>
               {'   '}
-              <span style={{ color: 'var(--pass)' }}>Naprawione: {diff.fixedCount}</span>
+              <span style={{ color: 'var(--pass)' }}>Fixed: {diff.fixedCount}</span>
               {'   '}
-              <span style={{ color: 'var(--text-dim)' }}>Utrzymujace sie: {diff.persistentIssues.length}</span>
+              <span style={{ color: 'var(--text-dim)' }}>Persisting: {diff.persistentIssues.length}</span>
             </div>
           )}
         </>
@@ -150,7 +153,7 @@ export function Overview() {
           <tbody>
             {history.map((h) => (
               <tr key={h.id}>
-                <td>{new Date(h.finishedAt).toLocaleString('pl-PL')}</td>
+                <td>{new Date(h.finishedAt).toLocaleString('en-GB')}</td>
                 <td style={{ maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.url}</td>
                 <td>{h.overallStatus}</td>
                 <td>{h.counts.total}</td>

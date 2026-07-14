@@ -228,3 +228,9 @@ export interface JiraCreateResult {
   key: string; // e.g. ACC-123
   url: string; // browse URL
 }
+
+// --- Application settings ---
+export interface AppSettings {
+  exportDir: string; // default folder for HTML/JSON/CSV exports ('' = ask each time)
+  askEachTime: boolean; // if true, always show the save dialog
+}

@@ -44,6 +44,18 @@ If policy prevents running the Node MSI installer, download Node.js as a ZIP arc
 
 ## Getting a ready build
 
+### Build on GitHub (no local tooling)
+
+The repository includes a GitHub Actions workflow (`.github/workflows/build-windows.yml`) that builds the Windows binaries on GitHub-hosted Windows runners:
+
+1. Push the project to GitHub (a private repository is fine).
+2. Open the Actions tab, select "Build Windows", and click "Run workflow" (or push a `v*` tag such as `v2.0.0`).
+3. After a few minutes, download the binaries from the run's Artifacts (`wcag-auditor-windows`). For tag builds they also appear under Releases.
+
+The artifact contains `WCAG-Auditor-2.0.0-portable.exe` (a single, self-contained executable) and an installer. No local build is needed.
+
+### Build locally
+
 On a machine with Node.js:
 
 ```bash

@@ -12,7 +12,7 @@
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build && npm run build:cli",
     "build:cli": "node scripts/build-cli.mjs",
-    "dist": "npm run build && electron-builder --win",
+    "dist": "npm run build && electron-builder --win --publish never",
     "dist:portable": "npm run build && electron-builder --win portable",
     "dist:dir": "npm run build && electron-builder --win --dir",
     "audit": "node dist-cli/wcag-audit.mjs",

@@ -1,8 +1,8 @@
 import type { BoundingBoxDTO } from '@shared/types';
 
 // Functions executed in the page context. The contrast math lives solely in
-// measureContrastAt, dzieki czemu pomiar stanu domyslnego i wymuszonych stanow
-// (:hover / :focus / :active) korzysta z tej samej logiki.
+// measureContrastAt, so the default-state and forced-state (:hover / :focus / :active)
+// measurements all use the same logic.
 
 export interface ContrastCandidate {
   index: number; // value of the data-wcag-ct attribute

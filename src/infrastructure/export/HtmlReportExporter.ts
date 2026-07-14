@@ -100,7 +100,7 @@ export class HtmlReportExporter implements IReportExporter {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Raport WCAG 2.2 - ${escapeHtml(scan.url)}</title>
+<title>WCAG 2.2 report - ${escapeHtml(scan.url)}</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -145,7 +145,7 @@ export class HtmlReportExporter implements IReportExporter {
 <div class="wrap">
   <div class="kv"><strong>URL:</strong> ${escapeHtml(scan.url)}</div>
   <div class="kv"><strong>Page title:</strong> ${escapeHtml(scan.title)}</div>
-  <div class="kv"><strong>Data:</strong> ${escapeHtml(new Date(scan.finishedAt).toLocaleString('pl-PL'))}</div>
+  <div class="kv"><strong>Date:</strong> ${escapeHtml(new Date(scan.finishedAt).toLocaleString('en-GB'))}</div>
   <div class="kv"><strong>Browser:</strong> ${escapeHtml(scan.browser.name)} ${escapeHtml(scan.browser.version)}</div>
   <div class="kv"><strong>Viewport:</strong> ${scan.viewport.width}x${scan.viewport.height}</div>
   <div class="kv"><strong>Scan time:</strong> ${(scan.durationMs / 1000).toFixed(1)} s</div>

@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, shell } from 'electron';
 import { buildContainer, type Container } from './composition';
 import { registerIpcHandlers } from './ipc';
+import { buildAppMenu } from './menu';
 
 let container: Container | null = null;
 
@@ -50,6 +51,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   container = buildContainer();
   registerIpcHandlers(container);
+  buildAppMenu();
   createWindow();
 
   app.on('activate', () => {

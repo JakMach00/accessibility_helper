@@ -25,7 +25,7 @@ export interface ILogger {
 
 // ---------------------------------------------------------------------------
 // A browser page. The minimal surface the audit modules need.
-// Adapter (Playwright) tlumaczy to na konkretny silnik. Dzieki temu domena
+// The adapter (Playwright) maps this to a concrete engine, so the domain
 // knows nothing about Playwright or CDP.
 // ---------------------------------------------------------------------------
 export interface IBrowserPage {
@@ -86,7 +86,7 @@ export interface IModuleRegistry {
 }
 
 // ---------------------------------------------------------------------------
-// Zrzuty ekranu z adnotacja (czerwony prostokat + numer bledu, punkt 7).
+// Annotated screenshots (red rectangle + issue number).
 // ---------------------------------------------------------------------------
 export interface CaptureOptions {
   scanId: string;
@@ -111,7 +111,7 @@ export interface IScanRepository {
 }
 
 // ---------------------------------------------------------------------------
-// Eksport raportow (punkt 10). Jeden port, wiele formatow.
+// Report export. One port, multiple formats.
 // ---------------------------------------------------------------------------
 export interface IReportExporter {
   readonly format: ReportFormat;

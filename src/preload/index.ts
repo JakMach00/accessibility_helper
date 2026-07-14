@@ -12,6 +12,7 @@ import type {
   JiraConfigInput,
   JiraIssuePayload,
   JiraCreateResult,
+  AppSettings,
   ScanDiffDTO,
   ScanResultDTO,
   ScanSummaryDTO
@@ -46,7 +47,13 @@ const api: RendererApi = {
   getJiraConfig: (): Promise<JiraConfigView> => ipcRenderer.invoke(IPC.jiraGetConfig),
   saveJiraConfig: (config: JiraConfigInput): Promise<void> => ipcRenderer.invoke(IPC.jiraSaveConfig, config),
   createJiraIssue: (payload: JiraIssuePayload): Promise<JiraCreateResult> =>
-    ipcRenderer.invoke(IPC.jiraCreateIssue, payload)
+    ipcRenderer.invoke(IPC.jiraCreateIssue, payload),
+  getSettings: (): Promise<AppSettings> => ipcRenderer.invoke(IPC.settingsGet),
+  saveSettings: (settings: AppSettings): Promise<void> => ipcRenderer.invoke(IPC.settingsSave, settings),
+  pickFolder: (): Promise<string | null> => ipcRenderer.invoke(IPC.settingsPickFolder),
+  onOpenSettings: (callback: () => void): void => {
+    ipcRenderer.on(IPC.menuOpenSettings, () => callback());
+  }
 };
 
 contextBridge.exposeInMainWorld('api', api);

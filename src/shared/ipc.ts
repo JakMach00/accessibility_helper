@@ -13,7 +13,8 @@ import type {
   JiraConfigView,
   JiraConfigInput,
   JiraIssuePayload,
-  JiraCreateResult
+  JiraCreateResult,
+  AppSettings
 } from './types';
 
 // Nazwy kanalow IPC w jednym miejscu, zeby uniknac literalow-magii.
@@ -37,7 +38,11 @@ export const IPC = {
   ignoreRemove: 'ignore:remove',
   jiraGetConfig: 'jira:getConfig',
   jiraSaveConfig: 'jira:saveConfig',
-  jiraCreateIssue: 'jira:createIssue'
+  jiraCreateIssue: 'jira:createIssue',
+  settingsGet: 'settings:get',
+  settingsSave: 'settings:save',
+  settingsPickFolder: 'settings:pickFolder',
+  menuOpenSettings: 'menu:open-settings'
 } as const;
 
 // Contract of the API exposed by the preload as window.api.
@@ -63,4 +68,8 @@ export interface RendererApi {
   getJiraConfig(): Promise<JiraConfigView>;
   saveJiraConfig(config: JiraConfigInput): Promise<void>;
   createJiraIssue(payload: JiraIssuePayload): Promise<JiraCreateResult>;
+  getSettings(): Promise<AppSettings>;
+  saveSettings(settings: AppSettings): Promise<void>;
+  pickFolder(): Promise<string | null>;
+  onOpenSettings(callback: () => void): void;
 }

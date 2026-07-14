@@ -74,27 +74,30 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
     return <div className="empty">This module was not run in this scan.</div>;
   }
 
-  const selected = issues.find((i) => i.id === selectedIssueId) ?? null;
-
-  const renderRow = (issue: IssueDTO) => (
-    <div
-      key={issue.id}
-      className={`issue-row ${selectedIssueId === issue.id ? 'selected' : ''}`}
-      onClick={() => selectIssue(issue.id)}
-    >
-      <div>
-        <span className={`chip ${issue.severity}`}>{issue.severity}</span>
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div className="title">
-          {ignoredKeys.has(issueIdentityKey(issue)) && <span className="ignored-tag">ignored</span>}
-          {issue.title}
+  const renderIssue = (issue: IssueDTO) => {
+    const expanded = selectedIssueId === issue.id;
+    return (
+      <div key={issue.id} className={`issue-block ${expanded ? 'expanded' : ''}`}>
+        <div
+          className={`issue-row ${expanded ? 'selected' : ''}`}
+          onClick={() => selectIssue(expanded ? null : issue.id)}
+        >
+          <div>
+            <span className={`chip ${issue.severity}`}>{issue.severity}</span>
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div className="title">
+              {ignoredKeys.has(issueIdentityKey(issue)) && <span className="ignored-tag">ignored</span>}
+              {issue.title}
+            </div>
+            <div className="sub">{issue.cssSelector || issue.xpath}</div>
+          </div>
+          <div className="wcag">{issue.wcagReferences.map((r) => `WCAG ${r.criterion}`).join(', ') || '-'}</div>
         </div>
-        <div className="sub">{issue.cssSelector || issue.xpath}</div>
+        {expanded && <IssueDetail issue={issue} />}
       </div>
-      <div className="wcag">{issue.wcagReferences.map((r) => `WCAG ${r.criterion}`).join(', ') || '-'}</div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="issues-layout">
@@ -139,7 +142,7 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
         </span>
       </div>
 
-      <div>
+      <div className="issue-list">
         {issues.length === 0 && <div className="empty">No issues match the current filters.</div>}
         {groups
           ? groups.map(([label, list]) => (
@@ -147,13 +150,11 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
                 <div className="group-header">
                   {label} <span className="group-count">{list.length}</span>
                 </div>
-                {list.map(renderRow)}
+                {list.map(renderIssue)}
               </div>
             ))
-          : issues.map(renderRow)}
+          : issues.map(renderIssue)}
       </div>
-
-      {selected && <IssueDetail issue={selected} />}
     </div>
   );
 }
@@ -204,6 +205,7 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
   const [jiraOpen, setJiraOpen] = useState(false);
   const [jiraBusy, setJiraBusy] = useState(false);
   const [jiraResult, setJiraResult] = useState<{ key: string; url: string } | null>(null);
+  const [actionError, setActionError] = useState('');
 
   const jiraText = buildJiraDefect(issue, pageUrl);
   const guidanceUrl = issue.helpUrl || issue.wcagReferences[0]?.url || '';
@@ -213,6 +215,7 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
     setInspection(null);
     setCopied(false);
     setJiraResult(null);
+    setActionError('');
     if (issue.screenshotPath) {
       void window.api.readScreenshot(issue.screenshotPath).then(setShot);
     }
@@ -220,11 +223,12 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
 
   const createJira = async () => {
     setJiraBusy(true);
+    setActionError('');
     try {
       const result = await window.api.createJiraIssue({ summary: `[A11y] ${issue.title}`, description: jiraText });
       setJiraResult(result);
     } catch (e) {
-      alert(humanizeError(e));
+      setActionError(humanizeError(e));
     } finally {
       setJiraBusy(false);
     }
@@ -233,11 +237,12 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
   const inspect = async () => {
     if (!selectedTargetId || !issue.cssSelector) return;
     setInspecting(true);
+    setActionError('');
     try {
       const result = await window.api.inspectDom(selectedTargetId, issue.cssSelector);
       setInspection(result);
     } catch (e) {
-      alert(humanizeError(e));
+      setActionError(humanizeError(e));
     } finally {
       setInspecting(false);
     }
@@ -327,6 +332,7 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
           </a>
         </div>
       )}
+      {actionError && <div className="detail-error">{actionError}</div>}
 
       <button onClick={inspect} disabled={inspecting || !issue.cssSelector}>
         {inspecting ? 'Fetching…' : 'DOM inspection (computed styles + ARIA)'}
@@ -357,28 +363,34 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
 function JiraSettings({ onClose }: { onClose: () => void }) {
   const [cfg, setCfg] = useState<JiraConfigView | null>(null);
   const [token, setToken] = useState('');
+  const [labelsText, setLabelsText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
 
   useEffect(() => {
-    void window.api.getJiraConfig().then(setCfg);
+    void window.api.getJiraConfig().then((c) => {
+      setCfg(c);
+      setLabelsText(c.labels.join(', '));
+    });
   }, []);
 
   const save = async () => {
     if (!cfg) return;
     setSaving(true);
+    setSettingsError('');
     try {
       await window.api.saveJiraConfig({
-        baseUrl: cfg.baseUrl,
-        email: cfg.email,
+        baseUrl: cfg.baseUrl.trim(),
+        email: cfg.email.trim(),
         apiToken: token, // empty = keep existing
-        projectKey: cfg.projectKey,
-        issueType: cfg.issueType,
-        component: cfg.component,
-        labels: cfg.labels
+        projectKey: cfg.projectKey.trim(),
+        issueType: cfg.issueType.trim(),
+        component: cfg.component.trim(),
+        labels: labelsText.split(',').map((l) => l.trim()).filter(Boolean)
       });
       onClose();
     } catch (e) {
-      alert(humanizeError(e));
+      setSettingsError(humanizeError(e));
     } finally {
       setSaving(false);
     }
@@ -409,9 +421,8 @@ function JiraSettings({ onClose }: { onClose: () => void }) {
         {field('Project key', cfg.projectKey, (v) => setCfg({ ...cfg, projectKey: v }), 'ACC')}
         {field('Issue type', cfg.issueType, (v) => setCfg({ ...cfg, issueType: v }), 'Bug')}
         {field('Component (optional)', cfg.component, (v) => setCfg({ ...cfg, component: v }))}
-        {field('Labels (comma-separated)', cfg.labels.join(', '), (v) =>
-          setCfg({ ...cfg, labels: v.split(',').map((s) => s.trim()).filter(Boolean) })
-        )}
+        {field('Labels (comma-separated)', labelsText, setLabelsText)}
+        {settingsError && <div className="detail-error">{settingsError}</div>}
         <div className="action-row" style={{ marginTop: 12 }}>
           <button className="primary" onClick={save} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
