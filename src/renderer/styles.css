@@ -653,3 +653,24 @@ table.modules th {
   margin-top: 2px;
   width: auto;
 }
+
+.review-note {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--review);
+  border-radius: 6px;
+  background: var(--bg-elev-2);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.review-note strong {
+  color: var(--text);
+}
+.review-note ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.review-note li {
+  margin: 2px 0;
+}

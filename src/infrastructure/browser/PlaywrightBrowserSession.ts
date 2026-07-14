@@ -131,6 +131,12 @@ export class PlaywrightBrowserPage implements IBrowserPage {
       this.logger.warn('Could not clear the viewport emulation', error);
     }
   }
+
+  async hover(cssSelector: string): Promise<void> {
+    // Short timeout so a missing/covered element does not stall the scan; the
+    // caller treats a failure as "nothing to reveal" and moves on.
+    await this.page.hover(cssSelector, { timeout: 2000 });
+  }
 }
 
 export class PlaywrightBrowserSession implements IBrowserSession {

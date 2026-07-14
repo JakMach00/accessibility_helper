@@ -56,7 +56,7 @@ export function referenceFromTag(tag: string): WcagReferenceDTO | null {
   return { criterion: meta.criterion, level: meta.level, title: meta.title, url: urlFor(meta.criterion, meta.title) };
 }
 
-// Buduje liste referencji WCAG z listy tagow axe, deduplikujac po kryterium.
+// Builds a list of WCAG references from axe tags, deduplicated by criterion.
 export function referencesFromTags(tags: string[]): WcagReferenceDTO[] {
   const seen = new Set<string>();
   const out: WcagReferenceDTO[] = [];

@@ -13,7 +13,8 @@ const AUDIT_TABS: NavDef[] = [
   { id: 'contrast', label: 'Contrast', moduleId: 'contrast' },
   { id: 'aria-audit', label: 'ARIA', moduleId: 'aria-audit' },
   { id: 'nvda', label: 'NVDA', moduleId: 'nvda' },
-  { id: 'zoom-reflow', label: 'Zoom', moduleId: 'zoom-reflow' }
+  { id: 'zoom-reflow', label: 'Zoom', moduleId: 'zoom-reflow' },
+  { id: 'dynamic-content', label: 'Dynamic', moduleId: 'dynamic-content' }
 ];
 
 export function Sidebar() {

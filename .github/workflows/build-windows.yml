@@ -1,8 +1,9 @@
 name: Build Windows
 
-# Builds the Windows app on a GitHub-hosted Windows runner and publishes it as a
-# .zip. No local tooling is required - download the .zip from the Actions tab
-# (Artifacts) or from Releases (for v* tags), extract it, and run the .exe inside.
+# Builds the Windows app on a GitHub-hosted Windows runner and publishes the whole
+# ready-to-run app folder as a single .zip. No local tooling is required: download
+# the .zip from Releases (for v* tags) or the Actions tab, extract it, and run
+# "WCAG Auditor.exe" inside the extracted folder.
 on:
   workflow_dispatch: {} # manual run from the Actions tab
   push:
@@ -26,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         # Skip the Playwright Chromium download - the app does not bundle it, and it
-        # is not needed for the build itself (the app uses the system Edge/Chrome).
+        # is not needed for the build (the app uses the system Edge/Chrome).
         run: npm install
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
@@ -34,22 +35,23 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Build the portable app
-        # --publish never stops electron-builder from trying to publish itself
-        # (which would require a GH_TOKEN); the Release step below does the publishing.
+      - name: Build the unpacked app
+        # --dir produces the ready-to-run app folder (release/win-unpacked) without
+        # installers. --publish never keeps electron-builder from trying to publish.
         run: |
           npm run build
-          npx electron-builder --win --publish never
+          npx electron-builder --win --dir --publish never
 
-      - name: Package the portable .exe into a .zip
+      - name: Package the app folder into a .zip
         shell: pwsh
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $portable = Get-ChildItem release\*-portable.exe | Select-Object -First 1
-          if (-not $portable) { throw "Portable .exe not found in release/" }
-          $zip = "release\WCAG-Auditor-$version.zip"
-          Compress-Archive -Path $portable.FullName -DestinationPath $zip -Force
-          Write-Host "Created $zip"
+          $src = "release\win-unpacked"
+          if (-not (Test-Path $src)) { throw "Build output release/win-unpacked not found" }
+          $name = "WCAG-Auditor-$version"
+          Rename-Item $src $name
+          Compress-Archive -Path "release\$name" -DestinationPath "release\$name.zip" -Force
+          Write-Host "Created release\$name.zip"
 
       - name: Upload the .zip (downloadable from the Actions tab)
         uses: actions/upload-artifact@v4

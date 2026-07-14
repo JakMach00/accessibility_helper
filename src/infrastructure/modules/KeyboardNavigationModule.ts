@@ -260,7 +260,7 @@ export class KeyboardNavigationModule implements IAuditModule {
   }
 }
 
-// Buduje liste referencji WCAG z numerow kryteriow, pomijajac nieznane.
+// Builds a list of WCAG references from criterion numbers, skipping unknown ones.
 function refsFor(...criteria: string[]): WcagReferenceDTO[] {
   const out: WcagReferenceDTO[] = [];
   for (const c of criteria) {

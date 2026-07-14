@@ -44,8 +44,18 @@ export function Overview() {
         </span>
       </div>
 
+      <div className="review-note">
+        <strong>Automated checks are not enough.</strong> Verify these manually on every page:
+        <ul>
+          <li>Whether image alt text is meaningful and accurate, not just present.</li>
+          <li>Whether link and button text makes sense out of context.</li>
+          <li>Reading and focus order in custom or complex widgets.</li>
+          <li>Content shown only on hover, focus, or click (menus, tooltips, popovers).</li>
+        </ul>
+      </div>
+
       <div className="cards">
-        <Stat n={c.total} label="Wszystkie" />
+        <Stat n={c.total} label="Total" />
         <Stat n={c.critical} label="Critical" color="var(--crit)" />
         <Stat n={c.serious} label="Serious" color="var(--serious)" />
         <Stat n={c.moderate} label="Moderate" color="var(--moderate)" />
@@ -55,7 +65,7 @@ export function Overview() {
       <div className="meta-grid">
         <span className="k">URL</span>
         <span>{currentScan.url}</span>
-        <span className="k">Tytul</span>
+        <span className="k">Title</span>
         <span>{currentScan.title || '-'}</span>
         <span className="k">Browser</span>
         <span>
@@ -67,7 +77,7 @@ export function Overview() {
         </span>
         <span className="k">Scan time</span>
         <span>{(currentScan.durationMs / 1000).toFixed(1)} s</span>
-        <span className="k">Data</span>
+        <span className="k">Date</span>
         <span>{new Date(currentScan.finishedAt).toLocaleString('en-GB')}</span>
       </div>
 

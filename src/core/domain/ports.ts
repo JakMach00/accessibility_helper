@@ -44,6 +44,9 @@ export interface IBrowserPage {
   // Clears the viewport emulation after a scan (important for attach mode on a real tab).
   // Optional: test fakes may leave it unimplemented.
   resetEmulation?(): Promise<void>;
+  // Hover over an element, to audit content that only appears on hover.
+  // Optional: test fakes may leave it unimplemented.
+  hover?(cssSelector: string): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------

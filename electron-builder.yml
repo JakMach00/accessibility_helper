@@ -2,18 +2,18 @@ appId: com.jakub.wcagauditor
 productName: WCAG Auditor
 copyright: Copyright © 2026 Jakub
 
-# electron-vite buduje do out/, tu tylko pakujemy wynik.
+# electron-vite builds into out/; here we only package the result.
 directories:
   output: release
   buildResources: build
 
-# Pliki aplikacji wchodzace do paczki. Zaleznosci produkcyjne (playwright, axe-core)
-# electron-builder dolacza automatycznie z node_modules.
+# Application files included in the package. Production dependencies (playwright,
+# axe-core) are added automatically by electron-builder from node_modules.
 files:
   - out/**/*
   - package.json
 
-# Playwright uruchamia procesy przegladarki, wiec jego kod trzymamy rozpakowany z asar.
+# Playwright launches browser processes, so its code is kept unpacked from asar.
 asarUnpack:
   - "**/node_modules/playwright/**"
   - "**/node_modules/playwright-core/**"
@@ -26,18 +26,18 @@ win:
     - target: nsis
       arch:
         - x64
-  # Wlasna ikona: odkomentuj po umieszczeniu pliku build/icon.ico (256x256).
+  # Custom icon: uncomment after placing build/icon.ico (256x256).
   # icon: build/icon.ico
 
-# Wersja portable: pojedynczy samodzielny plik .exe, bez instalacji.
+# Portable build: a single self-contained .exe, no installation.
 portable:
   artifactName: WCAG-Auditor-${version}-portable.${ext}
-  # Stala nazwa katalogu rozpakowania w %TEMP% (szybszy kolejny start).
+  # Fixed extraction folder name in %TEMP% (faster subsequent start).
   unpackDirName: WCAGAuditorPortable
 
 nsis:
-  oneClick: false                          # klasyczny kreator zamiast instalacji jednym klikiem
-  perMachine: false                        # instalacja dla biezacego uzytkownika (bez uprawnien admina)
+  oneClick: false                          # classic wizard instead of one-click install
+  perMachine: false                        # install for the current user (no admin rights)
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true

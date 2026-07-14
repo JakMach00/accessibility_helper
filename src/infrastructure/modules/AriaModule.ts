@@ -141,7 +141,7 @@ function rank(kind: AriaFindingKind): number {
   return order[kind];
 }
 
-// Liczy findingi bedace twardymi bledami (do korekty passedChecks).
+// Counts findings that are hard errors (to adjust passedChecks).
 function countHardErrors(findings: AriaFinding[]): number {
   let n = 0;
   for (const f of findings) {
@@ -150,7 +150,7 @@ function countHardErrors(findings: AriaFinding[]): number {
   return n;
 }
 
-// Buduje liste referencji WCAG z numerow kryteriow, pomijajac nieznane.
+// Builds a list of WCAG references from criterion numbers, skipping unknown ones.
 function refsFor(...criteria: string[]): WcagReferenceDTO[] {
   const out: WcagReferenceDTO[] = [];
   for (const c of criteria) {

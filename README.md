@@ -6,13 +6,14 @@ The application is built with Electron, React, and TypeScript (strict mode) foll
 
 ## Features
 
-- Six audit modules covering complementary areas of WCAG 2.2:
+- Seven audit modules covering complementary areas of WCAG 2.2:
   - WCAG Scan (axe-core): the core automated rule set, split into critical / serious / moderate / minor.
   - Keyboard Navigation: focus order, positive tabindex, elements unreachable by keyboard, missing visible focus, missing skip link, and a focus-trap probe that actually tabs through the page.
   - Zoom / Reflow: horizontal overflow at 200% and 400% (320 px), plus detection of a meta viewport that blocks zooming.
   - Contrast Checker: text contrast in the interactive :focus and :hover states, which axe-core does not check.
   - ARIA Audit: invalid and abstract roles, broken idref references, missing accessible names, and missing required states.
   - NVDA Simulation: an approximate reading-order preview, unnamed controls, and heading-level skips.
+  - Dynamic Content: hovers over menus, tooltips and popovers to find content that appears on hover but cannot be reached by keyboard, or that lacks popup semantics (WCAG 1.4.13, 2.1.1).
 - Audit any tab in an already-open browser, without navigating away, so multi-step flows (login, multi-page forms) can be reached manually and then scanned in place.
 - Human-readable, actionable error messages throughout.
 - Scan history with regression comparison between two scans.
@@ -46,13 +47,13 @@ If policy prevents running the Node MSI installer, download Node.js as a ZIP arc
 
 ### Build on GitHub (no local tooling)
 
-The repository includes a GitHub Actions workflow (`.github/workflows/build-windows.yml`) that builds the Windows app on GitHub-hosted Windows runners and publishes it as a `.zip`, so nothing is downloaded as a bare `.exe`:
+The repository includes a GitHub Actions workflow (`.github/workflows/build-windows.yml`) that builds the Windows app on GitHub-hosted Windows runners and publishes the whole ready-to-run app folder as a single `.zip`, so nothing is downloaded as a bare `.exe`:
 
 1. Push the project to GitHub (a private repository is fine).
 2. Open the Actions tab, select "Build Windows", and click "Run workflow" (or push a `v*` tag such as `v2.1.0`).
-3. After a few minutes, download `WCAG-Auditor-<version>.zip` from the run's Artifacts (`wcag-auditor-windows-zip`). For tag builds it also appears under Releases.
+3. After a few minutes, download `WCAG-Auditor-<version>.zip` from Releases (for tag builds) or from the run's Artifacts (`wcag-auditor-windows-zip`).
 
-Extract the `.zip` and run `WCAG-Auditor-<version>-portable.exe` inside. No installation and no local build are needed.
+Extract the `.zip` and run `WCAG Auditor.exe` inside the extracted folder. No installation and no local build are needed; the app stores its data in your user profile (`%APPDATA%`).
 
 ### Build locally
 
@@ -154,8 +155,11 @@ Automated tooling cannot fully replace manual accessibility review. Approximate 
 | Keyboard navigation | ~75% |
 | Zoom / Reflow | ~70% |
 | NVDA reading-order simulation | ~60%, always needs manual verification |
+| Dynamic content revealed on hover | detects reveal and keyboard reachability; the 1.4.13 dismissable / hoverable / persistent conditions need manual verification |
 
 Findings marked "needs review" are heuristics that require human confirmation.
+
+Some things cannot be checked automatically at all, and the application shows a reminder about them after every scan. In particular, no tool can judge whether an image's alt text is *meaningful*: it can only confirm that the attribute exists. Whether alt text, link text and button labels actually describe their target always needs a human.
 
 ## Architecture
 

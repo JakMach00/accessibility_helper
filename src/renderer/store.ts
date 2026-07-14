@@ -22,6 +22,7 @@ export type TabId =
   | 'aria-audit'
   | 'nvda'
   | 'zoom-reflow'
+  | 'dynamic-content'
   | 'screenshots'
   | 'export';
 
