@@ -92,21 +92,146 @@ function decryptToken(c: StoredConfig): string {
   return buf.toString('utf-8');
 }
 
-// Convert our plain-text defect into a minimal, always-valid ADF document.
+// --- Minimal ADF builder ---
+// Converts the defect text (Jira wiki style markup produced by the renderer)
+// into a structured ADF document: headings, ordered and bullet lists, code
+// blocks, bold labels, inline code and clickable links.
+
+interface AdfMark {
+  type: string;
+  attrs?: Record<string, unknown>;
+}
+
+interface AdfNode {
+  type: string;
+  attrs?: Record<string, unknown>;
+  content?: AdfNode[];
+  text?: string;
+  marks?: AdfMark[];
+}
+
+const URL_RE = /https?:\/\/[^\s)]+/g;
+
+function textNode(text: string, marks: AdfMark[] = []): AdfNode {
+  return marks.length > 0 ? { type: 'text', text, marks } : { type: 'text', text };
+}
+
+// Splits plain text into text nodes, marking bare URLs as clickable links.
+function linkify(text: string): AdfNode[] {
+  const nodes: AdfNode[] = [];
+  let last = 0;
+  for (const match of text.matchAll(URL_RE)) {
+    const start = match.index ?? 0;
+    if (start > last) nodes.push(textNode(text.slice(last, start)));
+    // Trailing sentence punctuation is not part of the address.
+    const href = match[0].replace(/[.,;:!?]+$/, '');
+    const rest = match[0].slice(href.length);
+    nodes.push(textNode(href, [{ type: 'link', attrs: { href } }]));
+    if (rest) nodes.push(textNode(rest));
+    last = start + match[0].length;
+  }
+  if (last < text.length) nodes.push(textNode(text.slice(last)));
+  return nodes;
+}
+
+// Parses one line: {{inline code}} and *bold* segments, the rest as plain
+// text with linkified URLs.
+function parseInline(line: string): AdfNode[] {
+  const nodes: AdfNode[] = [];
+  const pattern = /\{\{(.+?)\}\}|\*([^*]+)\*/g;
+  let last = 0;
+  for (const match of line.matchAll(pattern)) {
+    const start = match.index ?? 0;
+    if (start > last) nodes.push(...linkify(line.slice(last, start)));
+    if (match[1] !== undefined) nodes.push(textNode(match[1], [{ type: 'code' }]));
+    else if (match[2] !== undefined) nodes.push(textNode(match[2], [{ type: 'strong' }]));
+    last = start + match[0].length;
+  }
+  if (last < line.length) nodes.push(...linkify(line.slice(last)));
+  return nodes.length > 0 ? nodes : [textNode(line)];
+}
+
+function listItem(line: string): AdfNode {
+  return { type: 'listItem', content: [{ type: 'paragraph', content: parseInline(line) }] };
+}
+
+function pushCodeBlock(content: AdfNode[], language: string, lines: string[]): void {
+  const codeText = lines.join('\n');
+  if (codeText.trim().length === 0) return;
+  const block: AdfNode = { type: 'codeBlock', content: [textNode(codeText)] };
+  if (language) block.attrs = { language };
+  content.push(block);
+}
+
 function toAdf(text: string): unknown {
-  const content = text
-    .split('\n')
-    .map((line) =>
-      line
-        .replace(/^h3\.\s*/, '')
-        .replace(/\*/g, '')
-        .replace(/^#\s+/, '- ')
-        .trimEnd()
-    )
-    .filter((line) => line.trim().length > 0)
-    .map((line) => ({ type: 'paragraph', content: [{ type: 'text', text: line }] }));
+  const content: AdfNode[] = [];
+  let list: { type: 'orderedList' | 'bulletList'; items: AdfNode[] } | null = null;
+  let code: { language: string; lines: string[] } | null = null;
+
+  const flushList = (): void => {
+    if (list && list.items.length > 0) content.push({ type: list.type, content: list.items });
+    list = null;
+  };
+
+  for (const raw of text.split('\n')) {
+    const line = raw.trimEnd();
+
+    if (code) {
+      if (line.trim() === '{code}') {
+        pushCodeBlock(content, code.language, code.lines);
+        code = null;
+      } else {
+        code.lines.push(raw);
+      }
+      continue;
+    }
+
+    const codeStart = line.trim().match(/^\{code(?::([a-z0-9]+))?\}$/i);
+    if (codeStart) {
+      flushList();
+      code = { language: codeStart[1] ?? '', lines: [] };
+      continue;
+    }
+
+    if (line.trim().length === 0) {
+      flushList();
+      continue;
+    }
+
+    if (line.startsWith('h3. ')) {
+      flushList();
+      content.push({ type: 'heading', attrs: { level: 3 }, content: parseInline(line.slice(4)) });
+      continue;
+    }
+
+    if (line.startsWith('# ')) {
+      if (!list || list.type !== 'orderedList') {
+        flushList();
+        list = { type: 'orderedList', items: [] };
+      }
+      list.items.push(listItem(line.slice(2)));
+      continue;
+    }
+
+    if (line.startsWith('- ')) {
+      if (!list || list.type !== 'bulletList') {
+        flushList();
+        list = { type: 'bulletList', items: [] };
+      }
+      list.items.push(listItem(line.slice(2)));
+      continue;
+    }
+
+    flushList();
+    content.push({ type: 'paragraph', content: parseInline(line) });
+  }
+
+  // A code block that was never closed is still emitted.
+  if (code) pushCodeBlock(content, code.language, code.lines);
+  flushList();
+
   if (content.length === 0) {
-    content.push({ type: 'paragraph', content: [{ type: 'text', text: '-' }] });
+    content.push({ type: 'paragraph', content: [textNode('-')] });
   }
   return { type: 'doc', version: 1, content };
 }

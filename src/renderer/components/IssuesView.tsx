@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { DomInspectionDTO, IssueDTO, JiraConfigView, Severity, WcagLevel } from '@shared/types';
+import type { DomInspectionDTO, IssueDTO, ScanResultDTO, Severity, WcagLevel } from '@shared/types';
 import { SEVERITY_ORDER } from '@shared/types';
-import { issueIdentityKey, useStore } from '../store';
+import { isIssueIgnored, issueGroupKey, useStore } from '../store';
 import { humanizeError } from '../errors';
+import { JiraSettingsModal } from './JiraSettingsModal';
 
 const SEV_COLORS: Record<Severity, string> = {
   critical: '#ff453a',
@@ -38,7 +39,7 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
     return module.issues
       .filter((i) => filters.severities.has(i.severity))
       .filter((i) => (filters.onlyFails ? i.status === 'fail' : true))
-      .filter((i) => (filters.showIgnored ? true : !ignoredKeys.has(issueIdentityKey(i))))
+      .filter((i) => (filters.showIgnored ? true : !isIssueIgnored(i, ignoredKeys)))
       .filter((i) => {
         if (allLevels || i.wcagReferences.length === 0) return true;
         return i.wcagReferences.some((r) => filters.levels.has(r.level));
@@ -87,7 +88,7 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
           </div>
           <div style={{ minWidth: 0 }}>
             <div className="title">
-              {ignoredKeys.has(issueIdentityKey(issue)) && <span className="ignored-tag">ignored</span>}
+              {isIssueIgnored(issue, ignoredKeys) && <span className="ignored-tag">ignored</span>}
               {issue.title}
             </div>
             <div className="sub">{issue.cssSelector || issue.xpath}</div>
@@ -159,45 +160,116 @@ export function IssuesView({ moduleId }: { moduleId: string }) {
   );
 }
 
-function buildJiraDefect(issue: IssueDTO, pageUrl: string): string {
+// Formats a machine key from issue.extra (e.g. "contrastRatio") for humans.
+function humanizeExtraKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .toLowerCase();
+}
+
+function formatExtraValue(value: unknown): string {
+  if (value === null || value === undefined) return '-';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+// Builds the full defect text. Used for the created Jira issue and for the
+// copy-to-clipboard variant (Jira wiki markup).
+function buildJiraDefect(issue: IssueDTO, scan: ScanResultDTO | null, sameTypeCount: number): string {
   const criteria =
     issue.wcagReferences.map((r) => `${r.criterion} ${r.title} (Level ${r.level})`).join(', ') || 'n/a';
-  const criteriaShort = issue.wcagReferences.map((r) => r.criterion).join(', ');
-  const reference = issue.helpUrl || issue.wcagReferences[0]?.url || '';
+  const module = scan?.modules.find((m) => m.moduleId === issue.moduleId);
+  const pageUrl = scan?.url ?? '';
+  const screenshotName = issue.screenshotPath ? issue.screenshotPath.split(/[\\/]/).pop() : '';
+  const scannedAt = scan ? scan.finishedAt.replace('T', ' ').slice(0, 16) : '';
+  const extraEntries = Object.entries(issue.extra ?? {}).filter(
+    ([, v]) => v !== null && v !== undefined && v !== ''
+  );
+
   const lines: string[] = [];
   lines.push(`h3. [Accessibility] ${issue.title}`);
   lines.push('');
-  lines.push(`*Severity:* ${issue.severity}`);
+  lines.push(`*Severity:* ${issue.severity} (status: ${issue.status})`);
+  lines.push(`*Module:* ${module?.moduleName ?? issue.moduleId}`);
   lines.push(`*WCAG 2.2:* ${criteria}`);
-  if (pageUrl) lines.push(`*Page:* ${pageUrl}`);
-  lines.push(`*Element:* {{${issue.cssSelector || 'n/a'}}}`);
+  lines.push(`*Occurrences on this page:* ${sameTypeCount}`);
   lines.push('');
-  lines.push('*Description:*');
+  lines.push('h3. Environment');
+  if (pageUrl) lines.push(`- Page: ${pageUrl}`);
+  if (scan?.title) lines.push(`- Page title: ${scan.title}`);
+  if (scan) {
+    lines.push(`- Browser: ${scan.browser.name} ${scan.browser.version}`.trimEnd());
+    lines.push(`- Viewport: ${scan.viewport.width} x ${scan.viewport.height}`);
+    lines.push(`- Tool: WCAG Auditor v${scan.appVersion}, scanned ${scannedAt}`);
+  }
+  lines.push('');
+  lines.push('h3. Affected element');
+  lines.push(`*Selector:* {{${issue.cssSelector || 'n/a'}}}`);
+  if (issue.xpath) lines.push(`*XPath:* {{${issue.xpath}}}`);
+  if (issue.html) {
+    lines.push('*HTML snippet:*');
+    lines.push('{code:html}');
+    lines.push(issue.html);
+    lines.push('{code}');
+  }
+  if (extraEntries.length > 0) {
+    lines.push('');
+    lines.push('h3. Technical details');
+    for (const [key, value] of extraEntries) {
+      lines.push(`- ${humanizeExtraKey(key)}: ${formatExtraValue(value)}`);
+    }
+  }
+  lines.push('');
+  lines.push('h3. Steps to reproduce');
+  if (scan) {
+    lines.push(
+      `# Open ${scan.browser.name} and size the window to about ${scan.viewport.width} x ${scan.viewport.height}.`
+    );
+  } else {
+    lines.push('# Open the browser.');
+  }
+  lines.push(`# Go to ${pageUrl || 'the affected page'}.`);
+  lines.push('# Open DevTools (F12), press Ctrl+F in the Elements panel and search for the selector above.');
+  lines.push(`# Inspect the found element. Problem: ${issue.description || issue.title}`);
+  lines.push('');
+  lines.push('h3. Expected result');
+  lines.push(
+    issue.wcagReferences.length > 0
+      ? `The element meets WCAG 2.2 success ${issue.wcagReferences.length > 1 ? 'criteria' : 'criterion'} ${criteria}.`
+      : 'The element is accessible to keyboard and assistive technology users.'
+  );
+  lines.push('');
+  lines.push('h3. Actual result');
   lines.push(issue.description || issue.title);
   lines.push('');
-  lines.push('*Steps to reproduce:*');
-  lines.push('# Open the page listed above.');
-  lines.push('# Locate the element matching the selector.');
-  lines.push('# Observe the described accessibility problem.');
-  lines.push('');
-  lines.push(`*Expected:* The element conforms to WCAG 2.2${criteriaShort ? ` (${criteriaShort})` : ''}.`);
-  lines.push(`*Actual:* ${issue.description || issue.title}`);
-  lines.push('');
-  lines.push('*Suggested fix:*');
-  lines.push(issue.recommendation || 'See reference.');
-  if (reference) {
+  lines.push('h3. Suggested fix');
+  lines.push(issue.recommendation || 'See the reference links below.');
+  if (screenshotName) {
     lines.push('');
-    lines.push(`*Reference:* ${reference}`);
+    lines.push('h3. Screenshot');
+    lines.push(
+      `- ${screenshotName} (saved by WCAG Auditor; open it via the Screenshots folder button and attach it to this ticket)`
+    );
+  }
+  const references = [
+    ...(issue.helpUrl ? [issue.helpUrl] : []),
+    ...issue.wcagReferences.map((r) => `WCAG ${r.criterion} ${r.title}: ${r.url}`)
+  ];
+  if (references.length > 0) {
+    lines.push('');
+    lines.push('h3. References');
+    for (const ref of references) lines.push(`- ${ref}`);
   }
   return lines.join('\n');
 }
 
 function IssueDetail({ issue }: { issue: IssueDTO }) {
   const selectedTargetId = useStore((s) => s.selectedTargetId);
-  const pageUrl = useStore((s) => s.currentScan?.url ?? '');
+  const currentScan = useStore((s) => s.currentScan);
   const ignoreIssue = useStore((s) => s.ignoreIssue);
   const unignoreIssue = useStore((s) => s.unignoreIssue);
-  const isIgnored = useStore((s) => s.ignoredKeys.has(issueIdentityKey(issue)));
+  const isIgnored = useStore((s) => isIssueIgnored(issue, s.ignoredKeys));
   const [shot, setShot] = useState<string>('');
   const [inspection, setInspection] = useState<DomInspectionDTO | null>(null);
   const [inspecting, setInspecting] = useState(false);
@@ -207,7 +279,15 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
   const [jiraResult, setJiraResult] = useState<{ key: string; url: string } | null>(null);
   const [actionError, setActionError] = useState('');
 
-  const jiraText = buildJiraDefect(issue, pageUrl);
+  // How many issues of the same type this scan contains. Ignoring hides all of them.
+  const sameTypeCount = useMemo(() => {
+    const module = currentScan?.modules.find((m) => m.moduleId === issue.moduleId);
+    if (!module) return 1;
+    const key = issueGroupKey(issue);
+    return module.issues.filter((i) => issueGroupKey(i) === key).length;
+  }, [currentScan, issue]);
+
+  const jiraText = buildJiraDefect(issue, currentScan, sameTypeCount);
   const guidanceUrl = issue.helpUrl || issue.wcagReferences[0]?.url || '';
 
   useEffect(() => {
@@ -225,7 +305,9 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
     setJiraBusy(true);
     setActionError('');
     try {
-      const result = await window.api.createJiraIssue({ summary: `[A11y] ${issue.title}`, description: jiraText });
+      const criteriaShort = issue.wcagReferences.map((r) => r.criterion).join(', ');
+      const summary = criteriaShort ? `[A11y] ${issue.title} (WCAG ${criteriaShort})` : `[A11y] ${issue.title}`;
+      const result = await window.api.createJiraIssue({ summary, description: jiraText });
       setJiraResult(result);
     } catch (e) {
       setActionError(humanizeError(e));
@@ -266,7 +348,18 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
         <span className="chip ghost">{issue.status}</span>
       </div>
 
-      {shot && <img className="shot" src={shot} alt="Issue screenshot" style={{ maxHeight: 320 }} />}
+      {shot && (
+        <img
+          className="shot"
+          src={shot}
+          alt="Issue screenshot"
+          title="Double-click to open in the image viewer"
+          style={{ maxHeight: 320, cursor: 'zoom-in' }}
+          onDoubleClick={() => {
+            if (issue.screenshotPath) void window.api.openScreenshot(issue.screenshotPath);
+          }}
+        />
+      )}
 
       <p style={{ color: 'var(--text-dim)' }}>{issue.description}</p>
 
@@ -321,7 +414,12 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
         {isIgnored ? (
           <button onClick={() => void unignoreIssue(issue)}>Remove from ignore list</button>
         ) : (
-          <button onClick={() => void ignoreIssue(issue)}>Ignore this issue</button>
+          <button
+            onClick={() => void ignoreIssue(issue)}
+            title="Hides every occurrence of this issue type, in this scan and in future scans"
+          >
+            {sameTypeCount > 1 ? `Ignore this issue type (${sameTypeCount} occurrences)` : 'Ignore this issue'}
+          </button>
         )}
       </div>
       {jiraResult && (
@@ -355,81 +453,7 @@ function IssueDetail({ issue }: { issue: IssueDTO }) {
         </div>
       )}
 
-      {jiraOpen && <JiraSettings onClose={() => setJiraOpen(false)} />}
-    </div>
-  );
-}
-
-function JiraSettings({ onClose }: { onClose: () => void }) {
-  const [cfg, setCfg] = useState<JiraConfigView | null>(null);
-  const [token, setToken] = useState('');
-  const [labelsText, setLabelsText] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [settingsError, setSettingsError] = useState('');
-
-  useEffect(() => {
-    void window.api.getJiraConfig().then((c) => {
-      setCfg(c);
-      setLabelsText(c.labels.join(', '));
-    });
-  }, []);
-
-  const save = async () => {
-    if (!cfg) return;
-    setSaving(true);
-    setSettingsError('');
-    try {
-      await window.api.saveJiraConfig({
-        baseUrl: cfg.baseUrl.trim(),
-        email: cfg.email.trim(),
-        apiToken: token, // empty = keep existing
-        projectKey: cfg.projectKey.trim(),
-        issueType: cfg.issueType.trim(),
-        component: cfg.component.trim(),
-        labels: labelsText.split(',').map((l) => l.trim()).filter(Boolean)
-      });
-      onClose();
-    } catch (e) {
-      setSettingsError(humanizeError(e));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!cfg) return null;
-  const field = (label: string, value: string, on: (v: string) => void, placeholder = '') => (
-    <label className="jira-field">
-      <span>{label}</span>
-      <input value={value} placeholder={placeholder} onChange={(e) => on(e.target.value)} />
-    </label>
-  );
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Jira settings</h3>
-        <p style={{ color: 'var(--text-dim)', fontSize: 12, marginTop: 0 }}>
-          Uses the Jira Cloud REST API. Create an API token at id.atlassian.com. The token is stored encrypted on this
-          machine.
-        </p>
-        {field('Base URL', cfg.baseUrl, (v) => setCfg({ ...cfg, baseUrl: v }), 'https://your-domain.atlassian.net')}
-        {field('Email', cfg.email, (v) => setCfg({ ...cfg, email: v }), 'you@company.com')}
-        <label className="jira-field">
-          <span>API token {cfg.hasToken ? '(saved, leave empty to keep)' : ''}</span>
-          <input type="password" value={token} placeholder="paste API token" onChange={(e) => setToken(e.target.value)} />
-        </label>
-        {field('Project key', cfg.projectKey, (v) => setCfg({ ...cfg, projectKey: v }), 'ACC')}
-        {field('Issue type', cfg.issueType, (v) => setCfg({ ...cfg, issueType: v }), 'Bug')}
-        {field('Component (optional)', cfg.component, (v) => setCfg({ ...cfg, component: v }))}
-        {field('Labels (comma-separated)', labelsText, setLabelsText)}
-        {settingsError && <div className="detail-error">{settingsError}</div>}
-        <div className="action-row" style={{ marginTop: 12 }}>
-          <button className="primary" onClick={save} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button onClick={onClose}>Cancel</button>
-        </div>
-      </div>
+      {jiraOpen && <JiraSettingsModal onClose={() => setJiraOpen(false)} />}
     </div>
   );
 }

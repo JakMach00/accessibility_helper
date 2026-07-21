@@ -10,7 +10,15 @@ function LazyShot({ issue }: { issue: IssueDTO }) {
   if (!src) return null;
   return (
     <figure>
-      <img src={src} alt={issue.title} />
+      <img
+        src={src}
+        alt={issue.title}
+        title="Double-click to open in the image viewer"
+        style={{ cursor: 'zoom-in' }}
+        onDoubleClick={() => {
+          if (issue.screenshotPath) void window.api.openScreenshot(issue.screenshotPath);
+        }}
+      />
       <figcaption>
         <span className={`chip ${issue.severity}`}>{issue.severity}</span> {issue.title}
       </figcaption>

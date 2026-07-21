@@ -1,5 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, shell, type OpenDialogOptions, type WebContents } from 'electron';
 import type {
   AuditProgressEvent,
@@ -133,6 +133,14 @@ export function registerIpcHandlers(container: Container): void {
     } catch {
       return '';
     }
+  });
+
+  ipcMain.handle(IPC.screenshotOpen, async (_e, path: string): Promise<void> => {
+    // Only files inside our screenshots folder may be opened from the renderer.
+    const requested = resolve(path);
+    const root = resolve(container.screenshotsDir);
+    if (requested !== root && !requested.startsWith(root + sep)) return;
+    await shell.openPath(requested);
   });
 
   // --- Ignore list (accepted issues persisted across scans) ---

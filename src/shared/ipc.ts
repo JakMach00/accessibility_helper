@@ -32,6 +32,7 @@ export const IPC = {
   reportExport: 'report:export',
   domInspect: 'dom:inspect',
   screenshotRead: 'screenshot:read',
+  screenshotOpen: 'screenshot:open',
   shellOpenScreenshots: 'shell:openScreenshots',
   ignoreList: 'ignore:list',
   ignoreAdd: 'ignore:add',
@@ -61,6 +62,7 @@ export interface RendererApi {
   exportReport(options: ExportOptions): Promise<ExportResultDTO | null>;
   inspectDom(targetId: string, cssSelector: string): Promise<DomInspectionDTO>;
   readScreenshot(path: string): Promise<string>; // zwraca data URL lub pusty string
+  openScreenshot(path: string): Promise<void>; // opens the file in the system image viewer
   openScreenshotsFolder(): Promise<void>;
   listIgnored(): Promise<string[]>;
   addIgnored(key: string): Promise<void>;

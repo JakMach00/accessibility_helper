@@ -229,16 +229,22 @@ export const useStore = create<AppState>((set, get) => ({
   toggleShowIgnored: () => set((s) => ({ filters: { ...s.filters, showIgnored: !s.filters.showIgnored } })),
 
   ignoreIssue: async (issue) => {
-    const key = issueIdentityKey(issue);
+    // Ignoring works at the issue type level: every occurrence of the same
+    // problem (same module, title and WCAG mapping) is hidden, not just this element.
+    const key = issueGroupKey(issue);
     await window.api.addIgnored(key);
     set((s) => ({ ignoredKeys: new Set(s.ignoredKeys).add(key) }));
   },
   unignoreIssue: async (issue) => {
-    const key = issueIdentityKey(issue);
-    await window.api.removeIgnored(key);
+    // Remove the group key and the legacy per-element key so entries created
+    // by older versions of the app are cleaned up as well.
+    const keys = [issueGroupKey(issue), issueIdentityKey(issue)];
+    for (const key of keys) {
+      await window.api.removeIgnored(key);
+    }
     set((s) => {
       const next = new Set(s.ignoredKeys);
-      next.delete(key);
+      for (const key of keys) next.delete(key);
       return { ignoredKeys: next };
     });
   },
@@ -261,6 +267,22 @@ export function issueIdentityKey(issue: IssueDTO): string {
   return `${issue.moduleId}::${issue.title}::${wcag}::${issue.cssSelector}`;
 }
 
+// Identity of an issue type, without the element selector. Ignoring uses this
+// key, so one click hides all occurrences of the same problem on the page.
+export function issueGroupKey(issue: IssueDTO): string {
+  const wcag = issue.wcagReferences
+    .map((r) => r.criterion)
+    .sort()
+    .join(',');
+  return `${issue.moduleId}::${issue.title}::${wcag}`;
+}
+
+// True when the issue is on the ignore list, either via its group key or via
+// a legacy per-element key saved by an older version of the app.
+export function isIssueIgnored(issue: IssueDTO, ignoredKeys: Set<string>): boolean {
+  return ignoredKeys.has(issueGroupKey(issue)) || ignoredKeys.has(issueIdentityKey(issue));
+}
+
 // Selector: issues of the given module after filters are applied.
 export function selectFilteredIssues(state: AppState, moduleId: string): IssueDTO[] {
   const scan = state.currentScan;
@@ -273,7 +295,7 @@ export function selectFilteredIssues(state: AppState, moduleId: string): IssueDT
   return module.issues.filter((issue) => {
     if (!severities.has(issue.severity)) return false;
     if (onlyFails && issue.status !== 'fail') return false;
-    if (!showIgnored && state.ignoredKeys.has(issueIdentityKey(issue))) return false;
+    if (!showIgnored && isIssueIgnored(issue, state.ignoredKeys)) return false;
     if (!allLevels) {
       const hasLevel = issue.wcagReferences.some((r) => levels.has(r.level));
       if (issue.wcagReferences.length > 0 && !hasLevel) return false;

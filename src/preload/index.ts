@@ -40,6 +40,7 @@ const api: RendererApi = {
   inspectDom: (targetId: string, cssSelector: string): Promise<DomInspectionDTO> =>
     ipcRenderer.invoke(IPC.domInspect, targetId, cssSelector),
   readScreenshot: (path: string): Promise<string> => ipcRenderer.invoke(IPC.screenshotRead, path),
+  openScreenshot: (path: string): Promise<void> => ipcRenderer.invoke(IPC.screenshotOpen, path),
   openScreenshotsFolder: (): Promise<void> => ipcRenderer.invoke(IPC.shellOpenScreenshots),
   listIgnored: (): Promise<string[]> => ipcRenderer.invoke(IPC.ignoreList),
   addIgnored: (key: string): Promise<void> => ipcRenderer.invoke(IPC.ignoreAdd, key),

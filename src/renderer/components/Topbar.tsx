@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ConnectMode, ReportFormat } from '@shared/types';
 import { useStore } from '../store';
+import { JiraSettingsModal } from './JiraSettingsModal';
 
 const MODE_LABELS: Record<ConnectMode, string> = {
   'launch-edge': 'Open Edge for auditing',
@@ -41,6 +42,7 @@ export function Topbar() {
 
   const [mode, setMode] = useState<ConnectMode>('launch-edge');
   const [startUrl, setStartUrl] = useState('');
+  const [jiraOpen, setJiraOpen] = useState(false);
 
   const connected = browserName !== null;
   const isLaunch = mode.startsWith('launch');
@@ -148,6 +150,10 @@ export function Topbar() {
 
         <span className="spacer" />
 
+        <button onClick={() => setJiraOpen(true)} title="Jira connection settings (URL, project, API token)">
+          Jira
+        </button>
+
         <button
           className="theme-toggle"
           onClick={toggleTheme}
@@ -176,6 +182,7 @@ export function Topbar() {
         )}
       </div>
       <div className="topbar-hint">{renderHint()}</div>
+      {jiraOpen && <JiraSettingsModal onClose={() => setJiraOpen(false)} />}
     </>
   );
 }
